@@ -1,0 +1,455 @@
+<!DOCTYPE html><html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>Sensor graph</title>
+<link rel="shortcut icon" href="/favicon.ico" />
+</head>
+<div style="text-align:center;"><b>Sensor graph</b></div>
+<div class="chart-container" position: relative; height:350px; width:100%">
+  <canvas id="myChart" width="600" height="400"></canvas>
+</div>
+<br><br>
+<a href="/plot0">plot0:UDPdata</a>  <a href="/plot1">plot1:GyroAverage</a>  <a href="/plot2">plot2:GyroMinMax</a>
+<a href="/plot3">plot3:MotorCmd</a>  <a href="/plot4">plot4:MotorCmd&Thresh</a>  
+<br><br>
+<input id="Button1" type="button" value=" Thresh -5" onclick="OnButtonClick(-5);" />
+<input id="Button1" type="button" value=" Thresh +5" onclick="OnButtonClick(5);"/>
+
+<div id="rxnum"></div>
+
+
+<div id="app" v-cloak>
+  <div class="container" style="max-width: 1000px;">
+
+      <div class="form-group mt-3">
+          <h3>リストから選んで起�?</h3>
+          <p id="listhelp" class="form-text text-muted">クリ�?クしたマシンを起動します�?</p>
+
+          <table class="table table-hover" aria-describedby="listhelp">
+              <thead>
+                  <tr>
+                      <th>ID</th>
+                      <th><p v-bind:style="{color:myStyle}">length</p></th>
+                      <th>MSG {{timecnt}} {{can_msgs_sort.length}}</th>
+                  </tr>
+              </thead>
+              <tbody>
+                <tr v-for="msg in can_msgs" @click="selectMac(item)" style="cursor:pointer">
+                  <td scope="row">{{msg.id}}</td>
+                  <td> {{msg.dlc}}</td>
+                  <td  v-for="(youso, index ) in msg.data"   v-bind:style="{color:colorStr( msg.updatetime_data[index] )}">{{youso}}</td>
+                  <td  v-for="youso_time in msg.updatetime_data">{{youso_time}}</td>
+
+              </tr>
+              </tbody>
+
+          </table>
+      </div>
+  </div>
+
+  
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<script src="/vue.js"></script>
+<script src="/axios.min.js"></script>
+
+
+
+<script>
+    var app = new Vue({
+        el: "#app",
+        data: {
+            selectItem: { name: "", mac: "" },
+            can_dlc:0,
+            can_msgs:[],
+            can_msg:{ id:0, dlc:0, data:[0,0,0,0, 0,0,0,0], updatetime:-1, updatetime_data:[0,0,0,0, 0,0,0,0] },
+                        
+            can_msgs_sort:[],
+            can_id_array:[],
+            timecnt:0,
+                //{ id: 0, dlc: 8, msg: [0,1,2,3,4,5,6,7] },
+            myStyle: 'RGB(10,0,200)',
+            exist_list:[],
+            id_list:[],
+            id_list_num:0,
+            id_num:0,
+
+
+        },
+        mounted() {
+              setInterval(this.intervalFunc1000, 1000);
+              setInterval(this.intervalFunc5000, 5000);
+              console.log("Starting connection to WebSocket Server")
+              // this.can_dlc = 3;
+              // console.log("onmsg: "+this.can_dlc);
+
+              for(let i=0; i<0x7ff; i++){
+                this.exist_list[i] = -1;
+                //this.id_list = 0;
+                this.can_msg.id = 0;
+                this.can_msgs[i] =  Object.assign( {}, this.can_msg );
+              }
+              
+
+              this.connection = new WebSocket('ws://192.168.10.108:81/')
+              //this.connection = new WebSocket('ws://' + window.location.hostname + ':81/');
+              this.connection.onmessage = (event) => {
+                
+                get_msgs = JSON.parse(event.data)["mssges"];
+                this.sortOutCanMsg( get_msgs ); 
+                //console.log(this.can_msgs.length);
+
+              }
+
+              this.connection.onopen = function(event) {
+                console.log(event)
+                console.log("Successfully connected to the echo websocket server...")
+              }
+        },
+        computed: {
+
+        },
+        methods: {
+          colorStr:function( val ){
+            setVal = val*2;
+            if( setVal > 12 ){setVal=12; }
+            setValHex = setVal.toString(16);
+
+            return "#"+setValHex+setValHex+setValHex;
+
+          },
+            intervalFunc1000:function(){
+              this.timecnt = this.timecnt + 1;
+              this.sortMsg();
+              for( let i=0; i<this.id_num; i++){                
+                this.can_msgs[i].updatetime = this.can_msgs[i].updatetime + 1;
+                //this.can_msgs[i].updatetime_data = Object.assign( {}, this.can_msgs[i].updatetime_data );
+                for( let j=0; j<this.can_msgs[i].dlc; j++ ){
+                  this.can_msgs[i].updatetime_data[j] = this.can_msgs[i].updatetime_data[j] +1;
+                }
+              }
+
+
+            },
+            intervalFunc5000:function(){
+              //this.sortMsg();
+
+            },
+            sortOutCanMsg:function( getMsgs ){
+              //console.log( this.id_list );
+
+              for( let i=0; i<getMsgs.length; i++ ){
+                //exist_id = this.can_id_array.indexOf( getMsgs[i].id);
+                exist_id = this.can_msgs.findIndex(msg => msg.id === getMsgs[i].id);
+
+                //exist_id = this.exist_list[getMsgs[i].id];
+                //console.log( exist_id );
+
+                if( exist_id == -1 ){ // no exist
+                  // getMsgs[i].updatetime = 0;
+                  // getMsgs[i].updatetime_data = [];
+                  
+                  // for( let j=0; j<getMsgs[i].data.length; j++ ){
+                  //   getMsgs[i].updatetime_data.push( 0 );
+                  // }
+
+                  //this.can_msgs.push( getMsgs[i] );
+                  //this.can_msgs[getMsgs[i].id] =  getMsgs[i] ;
+
+                  // this.can_msgs[getMsgs[i].id].id = getMsgs[i].id;
+                  // this.can_msgs[getMsgs[i].id].dlc = getMsgs[i].dlc;
+                  // for( let k=0; k<getMsgs[i].dlc; k++ ){
+                  //   this.can_msgs[getMsgs[i].id].data = Object.assign( {}, getMsgs[i].data );
+                  // }
+
+                  //console.log( this.id_num );
+                  this.can_msgs[this.id_num].id = getMsgs[i].id;
+                  this.can_msgs[this.id_num].dlc = getMsgs[i].dlc;
+                  for( let k=0; k<getMsgs[i].dlc; k++ ){
+                    this.can_msgs[this.id_num].data = Object.assign( {}, getMsgs[i].data );
+                  }
+                  this.can_msgs[this.id_num].updatetime = 0;
+                  this.can_msgs[this.id_num].updatetime_data = Object.assign( {}, this.can_msgs[this.id_num].updatetime_data );
+
+                  this.id_num++;
+
+                  //this.can_id_array.push( getMsgs[i].id );
+                  this.can_msgs_sort = this.can_msgs;
+                  //this.can_msgs_sort.sort((a, b) => a.id - b.id);
+                  this.exist_list[getMsgs[i].id] = getMsgs[i].id;
+                  //this.id_list.push( getMsgs[i].id );
+                  //this.id_list[ id_list_num ] = getMsgs[i].id; 
+                  //id_list_num++;
+                  this.id_list.push(getMsgs[i].id);
+
+                }
+                else{ // exist 
+                  //console.log(this.can_msgs[ exist_id ] );
+                  //getMsgs[i].updatetime= 0;
+                  //getMsgs[i].updatetime_data = [];
+                  //console.log(getMsgs[i].data.length );
+
+                  for( let j=0; j<getMsgs[i].data.length; j++ ){
+
+                    //getMsgs[i].updatetime_data.push( 0 );
+                  
+                    // if( this.can_msgs[ exist_id ].data[j] != getMsgs[i].data[j] ){
+                    //   getMsgs[i].updatetime_data.push( 0 );
+                    // }
+                    // else{
+                    //   getMsgs[i].updatetime_data.push( this.can_msgs[ exist_id ].updatetime_data[j] );
+                    //   console.log( this.can_msgs[ exist_id ].updatetime_data[j]    );
+
+                    // }
+                  }
+                  //this.can_msgs[getMsgs[i].id] =  getMsgs[i] ;
+                  // this.can_msgs[getMsgs[i].id].id = getMsgs[i].id;
+                  // this.can_msgs[getMsgs[i].id].dlc = getMsgs[i].dlc;
+
+                  // for( let k=0; k<getMsgs[i].dlc; k++ ){
+                  //   this.can_msgs[getMsgs[i].id].data = Object.assign( {}, getMsgs[i].data );
+                  // }
+
+                  this.can_msgs[exist_id].id = getMsgs[i].id;
+                  this.can_msgs[exist_id].dlc = getMsgs[i].dlc;
+
+                  for( let k=0; k<getMsgs[i].dlc; k++ ){
+                    this.can_msgs[exist_id].data = Object.assign( {}, getMsgs[i].data );
+                  }
+
+                  this.can_msgs[exist_id].updatetime = 0;
+                  for( let j=0; j<this.can_msgs[exist_id].dlc; j++ ){
+                    this.can_msgs[exist_id].updatetime_data[j] = 0;
+                  }
+
+
+
+                  //this.can_msgs.splice( exist_id, 1, getMsgs[i]  );// [ exist_id ] = getMsgs[i];
+                  //this.can_msgs.splice( exist_id, 1, getMsgs[i]  );// [ exist_id ] = getMsgs[i];
+
+
+
+                }
+              }
+
+
+            },
+
+            sortMsg: function(){
+              console.log('sortt');
+              let can_msgs_active    = this.can_msgs.slice( 0, this.id_num ).sort((a, b) => a.id - b.id) ;
+              for( let i=0; i<this.id_num; i++){
+                this.can_msgs[i] = Object.assign( {}, can_msgs_active[i] );
+                // this.can_msgs[i].id = can_msgs_active[i].id;
+                // this.can_msgs[i].dlc = can_msgs_active[i].dlc;
+                // this.can_msgs[i].updatetime = can_msgs_active[i].updatetime;
+                // this.can_msgs[i].data = Object.assign( {}, can_msgs_active[i].data );
+                // this.can_msgs[i].updatetime_data = Object.assign( {}, can_msgs_active[i].updatetime_data );
+              }
+
+            //   can_msgs_active = this.can_msgs.slice( 0, this.id_list_num );
+            //   can_msgs_no_active = this.can_msgs.slice( this.id_list_num, this.can_msgs.length );
+            //  // let can_msgs_active = this.can_msgs.splice( 0, this.id_list_num );              
+            //  //let can_msgs_active = this.can_msgs;              
+            //   can_msgs_active.sort((a, b) => a.id - b.id);
+            //   this.can_msgs = can_msgs_active.concat( can_msgs_no_active );
+
+
+              //console.log( this.can_msgs.slice( 0, this.id_num ).sort((a, b) => a.id - b.id) );
+              //let can_msgs_no_active = this.can_msgs.slice( this.id_num, this.can_msgs.length );
+              //this.can_msgs = can_msgs_active.concat( can_msgs_no_active );
+            },
+
+
+            // WOLを実行す�?
+            sendMac: function () {
+
+                // POST�?ータを作�?�す�?
+
+                var formdata = new FormData();
+                formdata.append("mac", this.selectItem.mac);
+
+                // POSTする
+
+                // axios.post("/api/wol", formdata).then((res) => {
+                //     if (res.data.status == "ok") {
+                //         this.alert.type = "alert-success";
+                //         this.alert.msg = "実行しました?�?";
+                //     } else {
+                //         this.alert.type = "alert-danger";
+                //         this.alert.msg = "エラーが発生しました";
+                //     }
+                // }).catch((err) => {
+                //     this.alert.type = "alert-danger";
+                //     this.alert.msg = "エラーが発生しました[例外]";
+                // }).finally(() => {
+                //     this.myModal.hide();
+                // });
+            }
+
+        }
+        
+    })
+</script>
+
+
+<script src = "/Chart.min.js"></script>  
+<script>
+var graphData = {
+  labels: [],  // X軸の�?ータ (時間)
+  datasets: [
+    {
+        label: "Sensor-00",
+        data: [], // Y軸の�?ータ(センシング結果)
+        fill: false,
+        borderColor : "rgba(97,132,254,0.8)",
+        backgroundColor : "rgba(97,132,254,0.5)",
+        
+    },
+    {
+        label: "Sensor-01",
+        data: [], // Y軸の�?ータ(センシング結果)
+        fill: false,
+        borderColor : "rgba(254,97,132,0.8)",
+        backgroundColor : "rgba(254,97,132,0.5)",
+        
+    },
+    {
+        label: "Sensor-02",
+        data: [], // Y軸の�?ータ(センシング結果)
+        fill: false,
+        borderColor : "rgba(132,254,97,0.8)",
+        backgroundColor : "rgba(132,254,97,0.5)",
+        
+    }        
+
+  ]
+};
+var graphOptions = {
+  maintainAspectRatio: false,
+  scales: {
+    yAxes: [{
+      ticks: {beginAtZero:true}
+    }]
+  }
+};
+
+var ctx = document.getElementById("myChart").getContext('2d');
+var chart = new Chart(ctx, {
+  type: 'line',
+  data: graphData,
+  options: graphOptions
+});
+
+var ws = new WebSocket('ws://' + window.location.hostname + ':81/');
+ws.onmessage = function(evt) {
+  var Time = new Date().toLocaleTimeString();
+  // var data_x0 = JSON.parse(evt.data)["val0"];
+  // var data_x1 = JSON.parse(evt.data)["val1"];
+  // var data_x2 = JSON.parse(evt.data)["val2"];
+  // var mode = JSON.parse(evt.data)["mode"];
+
+  var msg = JSON.parse(evt.data)["mssges"];
+  var data_x0 = msg[0].id;
+  var data_x1 = msg[0].dlc;
+  var data_x2 = msg[0].data[0];
+  var mode = 0;//JSON.parse(evt.data)["mode"];
+
+  
+  var div = document.getElementById('rxnum'); 
+   div.innerHTML = data_x0;
+
+  // console.log(evt.data);
+
+  // console.log(Time);
+  // console.log(data_x0);
+  // console.log(data_x1);
+  // console.log(data_x2);
+
+  if( chart.data.labels.push(Time) > 100 ){
+    chart.data.labels.shift();
+  }
+  if( chart.data.datasets[0].data.push(data_x0) > 100 ){
+    chart.data.datasets[0].data.shift();
+  }
+  if( chart.data.datasets[1].data.push(data_x1) > 100 ){
+    chart.data.datasets[1].data.shift();
+  }
+  if( chart.data.datasets[2].data.push(data_x2) > 100 ){
+    chart.data.datasets[2].data.shift();
+  }
+
+  
+  var label_x0 = "000";
+  var label_x1 = "111";
+  var label_x2 = "222";
+
+  if( mode == 0){
+    label_x0 = "gyroX";
+    label_x1 = "gyroY";
+    label_x2 = "gyroZ";
+  }
+  if( mode == 3){
+    label_x0 = "gyroVal";
+    label_x1 = "motorCmd";
+    label_x2 = "aveGain_x100";
+  }  
+  if( mode == 4){
+    label_x0 = "gyroVal";
+    label_x1 = "motorCmd";
+    label_x2 = "gyroValThresh";
+  }  
+  if( mode == 2){
+    label_x0 = "minmaxX";
+    label_x1 = "minmaxY";
+    label_x2 = "minmaxZ";
+  }  
+  if( mode == 1){
+    label_x0 = "gyroAveX";
+    label_x1 = "gyroAveY";
+    label_x2 = "gyroAveZ";
+  }  
+
+  chart.data.datasets[0].label = label_x0;
+  chart.data.datasets[1].label = label_x1;
+  chart.data.datasets[2].label = label_x2;
+
+
+
+  chart.update();
+};
+ws.onclose = function(evt) {
+  console.log("ws: onclose");
+  ws.close();
+}
+ws.onerror = function(evt) {
+  console.log(evt);
+}
+
+
+var xhr = new XMLHttpRequest(), reqSend = 0, reqRet = 0; 
+xhr.onreadystatechange = HttpRes; 
+function HttpRes()  { 
+  if (xhr.readyState == 4 && xhr.status == 200) reqRet = 1; 
+} 
+
+function HttpReq(v) { 
+  xhr.open('GET', '/rc?' + v); 
+  xhr.send(null); 
+  reqRet = 0; 
+}
+
+function OnButtonClick( addval ) {
+  HttpReq('D0=' + addval);
+}
+
+
+</script>
+
+
+
+</body></html>
+
