@@ -4,9 +4,11 @@
 <link rel="shortcut icon" href="/favicon.ico" />
 </head>
 <div style="text-align:center;"><b>Sensor graph</b></div>
+<!--
 <div class="chart-container" position: relative; height:350px; width:100%">
   <canvas id="myChart" width="600" height="400"></canvas>
 </div>
+-->
 <br><br>
 <a href="/plot0">plot0:UDPdata</a>  <a href="/plot1">plot1:GyroAverage</a>  <a href="/plot2">plot2:GyroMinMax</a>
 <a href="/plot3">plot3:MotorCmd</a>  <a href="/plot4">plot4:MotorCmd&Thresh</a>  
@@ -24,20 +26,34 @@
           <h3>リストから選んで起�?</h3>
           <p id="listhelp" class="form-text text-muted">クリ�?クしたマシンを起動します�?</p>
 
+
+          {{timecnt}}
           <table class="table table-hover" aria-describedby="listhelp">
               <thead>
                   <tr>
                       <th>ID</th>
-                      <th><p v-bind:style="{color:myStyle}">length</p></th>
-                      <th>MSG {{timecnt}} {{can_msgs_sort.length}}</th>
+                      <th><p v-bind:style="{color:myStyle}">dlc </p></th>
+                      <th>time</th>
+                      <th>d00</th>
+                      <th>d01</th>
+                      <th>d02</th>
+                      <th>d03</th>
+                      <th>d04</th>
+                      <th>d05</th>
+                      <th>d06</th>
+                      <th>d07</th>
+
                   </tr>
               </thead>
               <tbody>
                 <tr v-for="msg in can_msgs" @click="selectMac(item)" style="cursor:pointer">
                   <td scope="row">{{msg.id}}</td>
                   <td> {{msg.dlc}}</td>
-                  <td  v-for="(youso, index ) in msg.data"   v-bind:style="{color:colorStr( msg.updatetime_data[index] )}">{{youso}}</td>
-                  <td  v-for="youso_time in msg.updatetime_data">{{youso_time}}</td>
+                  <td> {{msg.updatetime}}</td>
+                  <td  v-for="index  of msg.dlc"   v-bind:style="{color:colorStr( msg.updatecount_data[index] )}">{{msg.data[index-1]}}</td>
+                  <!--
+                  <td  v-for="youso_time in msg.updatecount_data">{{youso_time}}</td>
+                  -->
 
               </tr>
               </tbody>
@@ -65,7 +81,7 @@
             selectItem: { name: "", mac: "" },
             can_dlc:0,
             can_msgs:[],
-            can_msg:{ id:0, dlc:0, data:[0,0,0,0, 0,0,0,0], updatetime:-1, updatetime_data:[0,0,0,0, 0,0,0,0] },
+            can_msg:{ id:0, dlc:0, data:[0,0,0,0, 0,0,0,0], updatetime:-1, updatecount_data:[0,0,0,0, 0,0,0,0] },
                         
             can_msgs_sort:[],
             can_id_array:[],
@@ -126,9 +142,9 @@
               this.sortMsg();
               for( let i=0; i<this.id_num; i++){                
                 this.can_msgs[i].updatetime = this.can_msgs[i].updatetime + 1;
-                //this.can_msgs[i].updatetime_data = Object.assign( {}, this.can_msgs[i].updatetime_data );
+                //this.can_msgs[i].updatecount_data = Object.assign( {}, this.can_msgs[i].updatecount_data );
                 for( let j=0; j<this.can_msgs[i].dlc; j++ ){
-                  this.can_msgs[i].updatetime_data[j] = this.can_msgs[i].updatetime_data[j] +1;
+                  this.can_msgs[i].updatecount_data[j] = this.can_msgs[i].updatecount_data[j] +1;
                 }
               }
 
@@ -150,10 +166,10 @@
 
                 if( exist_id == -1 ){ // no exist
                   // getMsgs[i].updatetime = 0;
-                  // getMsgs[i].updatetime_data = [];
+                  // getMsgs[i].updatecount_data = [];
                   
                   // for( let j=0; j<getMsgs[i].data.length; j++ ){
-                  //   getMsgs[i].updatetime_data.push( 0 );
+                  //   getMsgs[i].updatecount_data.push( 0 );
                   // }
 
                   //this.can_msgs.push( getMsgs[i] );
@@ -171,8 +187,12 @@
                   for( let k=0; k<getMsgs[i].dlc; k++ ){
                     this.can_msgs[this.id_num].data = Object.assign( {}, getMsgs[i].data );
                   }
+
+                  let now = new Date(); // 1654525795212                  
+                  this.can_msgs[this.id_num].updatetime = now.getTime()/1000;
                   this.can_msgs[this.id_num].updatetime = 0;
-                  this.can_msgs[this.id_num].updatetime_data = Object.assign( {}, this.can_msgs[this.id_num].updatetime_data );
+
+                  this.can_msgs[this.id_num].updatecount_data = Object.assign( {}, this.can_msgs[this.id_num].updatecount_data );
 
                   this.id_num++;
 
@@ -189,19 +209,19 @@
                 else{ // exist 
                   //console.log(this.can_msgs[ exist_id ] );
                   //getMsgs[i].updatetime= 0;
-                  //getMsgs[i].updatetime_data = [];
+                  //getMsgs[i].updatecount_data = [];
                   //console.log(getMsgs[i].data.length );
 
                   for( let j=0; j<getMsgs[i].data.length; j++ ){
 
-                    //getMsgs[i].updatetime_data.push( 0 );
+                    //getMsgs[i].updatecount_data.push( 0 );
                   
                     // if( this.can_msgs[ exist_id ].data[j] != getMsgs[i].data[j] ){
-                    //   getMsgs[i].updatetime_data.push( 0 );
+                    //   getMsgs[i].updatecount_data.push( 0 );
                     // }
                     // else{
-                    //   getMsgs[i].updatetime_data.push( this.can_msgs[ exist_id ].updatetime_data[j] );
-                    //   console.log( this.can_msgs[ exist_id ].updatetime_data[j]    );
+                    //   getMsgs[i].updatecount_data.push( this.can_msgs[ exist_id ].updatecount_data[j] );
+                    //   console.log( this.can_msgs[ exist_id ].updatecount_data[j]    );
 
                     // }
                   }
@@ -220,9 +240,12 @@
                     this.can_msgs[exist_id].data = Object.assign( {}, getMsgs[i].data );
                   }
 
+                  let now = new Date(); // 1654525795212                  
+                  this.can_msgs[exist_id].updatetime = now.getTime()/1000;    
                   this.can_msgs[exist_id].updatetime = 0;
+                  
                   for( let j=0; j<this.can_msgs[exist_id].dlc; j++ ){
-                    this.can_msgs[exist_id].updatetime_data[j] = 0;
+                    this.can_msgs[exist_id].updatecount_data[j] = 0;
                   }
 
 
@@ -240,14 +263,21 @@
 
             sortMsg: function(){
               console.log('sortt');
-              let can_msgs_active    = this.can_msgs.slice( 0, this.id_num ).sort((a, b) => a.id - b.id) ;
+              //let can_msgs_active    = this.can_msgs.slice( 0, this.id_num ).sort((a, b) => a.id - b.id) ;
+              let can_msgs_active    = this.can_msgs.slice( 0, this.id_num ).sort((a, b) => {
+                  if (a.updatetime < b.updatetime) return -1;
+                  if (a.updatetime > b.updatetime) return 1;
+                  if (a.id < b.id) return -1;
+                  if (a.id > b.id) return 1;
+                  return 0;
+              });
               for( let i=0; i<this.id_num; i++){
                 this.can_msgs[i] = Object.assign( {}, can_msgs_active[i] );
                 // this.can_msgs[i].id = can_msgs_active[i].id;
                 // this.can_msgs[i].dlc = can_msgs_active[i].dlc;
                 // this.can_msgs[i].updatetime = can_msgs_active[i].updatetime;
                 // this.can_msgs[i].data = Object.assign( {}, can_msgs_active[i].data );
-                // this.can_msgs[i].updatetime_data = Object.assign( {}, can_msgs_active[i].updatetime_data );
+                // this.can_msgs[i].updatecount_data = Object.assign( {}, can_msgs_active[i].updatecount_data );
               }
 
             //   can_msgs_active = this.can_msgs.slice( 0, this.id_list_num );
@@ -419,7 +449,7 @@ ws.onmessage = function(evt) {
 
 
 
-  chart.update();
+  //chart.update();
 };
 ws.onclose = function(evt) {
   console.log("ws: onclose");
