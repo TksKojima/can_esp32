@@ -19,6 +19,8 @@ WebServer server(80);
 // Websocketサーバー IPアドレス:81
 WebSocketsServer webSocket = WebSocketsServer(81); // 81番ポート
 
+//char* webSocketOutput ="";
+
 const char* ssid_ap = "wifi";
 const char* password_ap = "12345678";
 
@@ -185,56 +187,49 @@ void wifi_setup( int wifi_mode ){
 }
 
 
-
-StaticJsonDocument<2000> doc;
+//StaticJsonDocument<2000> doc;
 
 void wifi_loop(){
-  webSocket.loop();
   server.handleClient();
 
+//StaticJsonDocument<2000> doc;
+// doc.clear();
 
-  static int cnt1 = 0;
-  static int cnt2 = 0;
+// JsonArray mssges = doc.createNestedArray("mssges");
 
-doc.clear();
-char output[600];
+// int rndfornum = random(1,3);
+// for(int k=0;k<rndfornum;k++){
+//   JsonObject mssges_0 = mssges.createNestedObject();
+// //  int rndID = random(1,0x7ff);
+//   int rndID = random(1,0x7ff);
 
+//   mssges_0["id"] = rndID;
+//   mssges_0["dlc"] = (rndID%8) + 1;
 
-JsonArray mssges = doc.createNestedArray("mssges");
+//   JsonArray mssges_0_data = mssges_0.createNestedArray("data");
+//   mssges_0_data.add(random(0,255));
+//   mssges_0_data.add(random(0,127));
+//   mssges_0_data.add(random(0,63));
+//   mssges_0_data.add(random(0,31));
+//   mssges_0_data.add(random(0,15));
+//   mssges_0_data.add(random(0,7));
+//   mssges_0_data.add(random(0,3));
+//   mssges_0_data.add(1);
 
-int rndfornum = random(1,3);
-for(int k=0;k<rndfornum;k++){
-  JsonObject mssges_0 = mssges.createNestedObject();
-//  int rndID = random(1,0x7ff);
-  int rndID = random(1,0x7ff);
+// };
 
-  mssges_0["id"] = rndID;
-  mssges_0["dlc"] = (rndID%8) + 1;
-
-  JsonArray mssges_0_data = mssges_0.createNestedArray("data");
-  mssges_0_data.add(random(0,255));
-  mssges_0_data.add(random(0,127));
-  mssges_0_data.add(random(0,63));
-  mssges_0_data.add(random(0,31));
-  mssges_0_data.add(random(0,15));
-  mssges_0_data.add(random(0,7));
-  mssges_0_data.add(random(0,3));
-  mssges_0_data.add(1);
-
-};
-
-serializeJson(doc, output);
+// serializeJson(doc, output);
 //Serial.println(output);
-webSocket.broadcastTXT(output, strlen(output));
-
-cnt1 += 1;
-cnt2 += 2;
-
-if( cnt1 > 100 ) cnt1 = 0;
-if( cnt2 > 100 ) cnt2 = 0;
+//webSocket.broadcastTXT( webSocketOutput, strlen(websocketOutput));
 
 }
 
+void wifi_websocket_loop( char* websocket_txt, size_t len ){
+  webSocket.loop();
+  //webSocket.broadcastTXT( websocket_txt, strlen(websocket_txt));
+  webSocket.broadcastTXT( websocket_txt, len);
+
+}
 
 // Webコンテンツのイベントハンドラ
 void handlePlot() {

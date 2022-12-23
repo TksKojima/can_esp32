@@ -10,6 +10,7 @@ int countMax = 5;
 void can_init(){
    Serial.println("CAN Sender");
    CAN.setPins(26, 27);
+   //CAN.setPins(4, 5);
 
   // start the CAN bus at 500 kbps
   if (!CAN.begin(500E3)) {
@@ -68,7 +69,6 @@ void canbuf_send(){
 //  for( int i=0; i<0x800; i++){
   for( int i=0; i<bufNum; i++){
     if( canbuf[i].txrxFlag == canBuffer::TX){
-
       if( millis() - canbuf[i].prevTime >= canbuf[i].cycleTime ){
         canbuf_sendSingle(i);
         canbuf[i].prevTime = millis();
@@ -148,6 +148,7 @@ void recvDataTimeCount(){
 }
 
 void printRecv(){
+   Serial.println("printRecv");
 //    for( int i=0; i<0x800; i++){
     for( int i=0; i<bufNum; i++){
       if( canbuf[i].txrxFlag == canBuffer::RX ){
@@ -180,3 +181,60 @@ void setup_CallBack() {
   // register the receive callback
   CAN.onReceive(onReceive);
 }
+
+StaticJsonDocument<2000> candoc;
+char can_json[3000];
+
+void makeCanMsgJson(){
+  int cnt=0;
+  candoc.clear();
+  JsonArray canmsgs = candoc.createNestedArray("canmsg");
+  for( int i=0; i<bufNum; i++){
+//  for( int i=0; i<50; i++){
+    if( canbuf[i].txrxFlag == canBuffer::RX ){
+      canbuf[i].txrxFlag =  canBuffer::NON;
+      JsonObject canmsg = canmsgs.createNestedObject();
+      canmsg["id"]  = canbuf[i].id;
+      canmsg["dlc"] = canbuf[i].dlc;
+      JsonArray canmsg_data = canmsg.createNestedArray("data");
+    
+      for( int k=0; k<canbuf[i].dlc; k++){
+        canmsg_data.add( canbuf[i].data.u1[k] );    
+      }
+      cnt++;
+    }
+  }
+  serializeJson(candoc, can_json);
+   Serial.print("RX_ID_num:"); Serial.println(cnt);
+}
+
+void makeCanMsgJsonDummy(){
+  //
+  candoc.clear();
+
+  JsonArray canmsg = candoc.createNestedArray("canmsg");
+
+  int rndfornum = random(1,3);
+  for(int k=0;k<rndfornum;k++){
+    JsonObject canmsg_0 = canmsg.createNestedObject();
+    int rndID = random(1,0x7ff);
+
+    canmsg_0["id"] = rndID;
+    canmsg_0["dlc"] = (rndID%8) + 1;
+
+    JsonArray canmsg_0_data = canmsg_0.createNestedArray("data");
+    canmsg_0_data.add(random(0,255));
+    canmsg_0_data.add(random(0,127));
+    canmsg_0_data.add(random(0,63));
+    canmsg_0_data.add(random(0,31));
+    canmsg_0_data.add(random(0,15));
+    canmsg_0_data.add(random(0,7));
+    canmsg_0_data.add(random(0,3));
+    canmsg_0_data.add(1);
+
+  };
+
+  serializeJson(candoc, can_json);
+
+}
+

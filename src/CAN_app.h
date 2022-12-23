@@ -7,6 +7,8 @@
 #include <Arduino.h>
 #include <CAN.h>
 
+#include "ArduinoJson-v6.19.4.h"
+
 // typedef struct canApp{
 // }canApp;
 
@@ -36,6 +38,8 @@ typedef struct canBuffer
 
 //canBuffer canbuf[0x800];
 
+extern char can_json[];
+
 void can_init();
 void canbuf_init();
 void canbuf_sendSingle( int id );
@@ -44,6 +48,8 @@ void canbuf_sendSingle( int id );
 void onReceive(int packetSize);
 void printRecv();
 void setup_CallBack();
+void makeCanMsgJsonDummy();
+void makeCanMsgJson();
 
 
 #endif

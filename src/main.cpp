@@ -19,17 +19,22 @@ void setup() {
   while (!Serial);
   can_init();
 
-  wifi_setup( WIFI_AP );  //自分がWifi発信
+  wifi_setup( WIFI_AP );  //自�?がWifi発信
   //wifi_setup( WIFI_STA );  //ルータ等がWifi発信
 
+  Serial.println("SetUpEnd");
 }
 
+
+char canMsgJson[600];
+
+StaticJsonDocument<2000> doc;
 
 void loop() {
   static unsigned long curr_prev=0;
   unsigned long curr = millis(); // 現在時刻を更新
 
-  if( curr - curr_prev < 25 ){
+  if( curr - curr_prev < 50 ){
     return;
   }
   curr_prev = curr;
@@ -37,9 +42,14 @@ void loop() {
   // canbuf_send();
   // delay(1);
 
-  printRecv();
+  //printRecv();
   delay(1);
 
+  makeCanMsgJson();
+  //makeCanMsgJsonDummy();
+  
+  wifi_websocket_loop( can_json, strlen(can_json) );
+  //Serial.println(can_json);
   wifi_loop();
  
 }

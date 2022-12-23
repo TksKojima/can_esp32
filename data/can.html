@@ -3,29 +3,12 @@
 <title>Sensor graph</title>
 <link rel="shortcut icon" href="/favicon.ico" />
 </head>
-<div style="text-align:center;"><b>Sensor graph</b></div>
 <!--
-<div class="chart-container" position: relative; height:350px; width:100%">
-  <canvas id="myChart" width="600" height="400"></canvas>
-</div>
+<div style="text-align:center;"><b>S </b></div>
 -->
-<br><br>
-<a href="/plot0">plot0:UDPdata</a>  <a href="/plot1">plot1:GyroAverage</a>  <a href="/plot2">plot2:GyroMinMax</a>
-<a href="/plot3">plot3:MotorCmd</a>  <a href="/plot4">plot4:MotorCmd&Thresh</a>  
-<br><br>
-<input id="Button1" type="button" value=" Thresh -5" onclick="OnButtonClick(-5);" />
-<input id="Button1" type="button" value=" Thresh +5" onclick="OnButtonClick(5);"/>
-
-<div id="rxnum"></div>
-
 
 <div id="app" v-cloak>
   <div class="container" style="max-width: 1000px;">
-
-      <div class="form-group mt-3">
-          <h3>リストから選んで起�?</h3>
-          <p id="listhelp" class="form-text text-muted">クリ�?クしたマシンを起動します�?</p>
-
 
           {{timecnt}}
           <table class="table table-hover" aria-describedby="listhelp">
@@ -50,7 +33,7 @@
                   <td scope="row">{{msg.id}}</td>
                   <td> {{msg.dlc}}</td>
                   <td> {{msg.updatetime}}</td>
-                  <td  v-for="index  of msg.dlc"   v-bind:style="{color:colorStr( msg.updatecount_data[index] )}">{{msg.data[index-1]}}</td>
+                  <td  v-for="index  of 8"   v-bind:style="{color:colorStr( msg.updatecount_data[index-1] )}">{{msg.data[index-1]}}</td>
                   <!--
                   <td  v-for="youso_time in msg.updatecount_data">{{youso_time}}</td>
                   -->
@@ -59,12 +42,27 @@
               </tbody>
 
           </table>
-      </div>
   </div>
 
   
 </div>
-
+<style>
+  table {
+    border: solid 1px #ccc;
+    border-collapse:collapse;
+  }
+  th {
+    padding: 0.1px 10px;
+    border: solid 1px #ccc;
+    background-color: #eee;
+  }
+  td {
+    padding: 1px;
+    border: solid 1px #ccc;
+    text-align: center;
+  }
+  </style>
+  
 
 <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
@@ -96,7 +94,7 @@
 
         },
         mounted() {
-              setInterval(this.intervalFunc1000, 1000);
+              setInterval(this.intervalFunc1000, 100);
               setInterval(this.intervalFunc5000, 5000);
               console.log("Starting connection to WebSocket Server")
               // this.can_dlc = 3;
@@ -113,10 +111,10 @@
               this.connection = new WebSocket('ws://192.168.10.108:81/')
               //this.connection = new WebSocket('ws://' + window.location.hostname + ':81/');
               this.connection.onmessage = (event) => {
+                console.log(event.data);
                 
-                get_msgs = JSON.parse(event.data)["mssges"];
+                get_msgs = JSON.parse(event.data)["canmsg"];
                 this.sortOutCanMsg( get_msgs ); 
-                //console.log(this.can_msgs.length);
 
               }
 
@@ -131,7 +129,7 @@
         methods: {
           colorStr:function( val ){
             setVal = val*2;
-            if( setVal > 12 ){setVal=12; }
+            if( setVal > 10 ){setVal=10; }
             setValHex = setVal.toString(16);
 
             return "#"+setValHex+setValHex+setValHex;
@@ -212,7 +210,7 @@
                   //getMsgs[i].updatecount_data = [];
                   //console.log(getMsgs[i].data.length );
 
-                  for( let j=0; j<getMsgs[i].data.length; j++ ){
+                  //for( let j=0; j<getMsgs[i].data.length; j++ ){
 
                     //getMsgs[i].updatecount_data.push( 0 );
                   
@@ -224,7 +222,7 @@
                     //   console.log( this.can_msgs[ exist_id ].updatecount_data[j]    );
 
                     // }
-                  }
+                  //}
                   //this.can_msgs[getMsgs[i].id] =  getMsgs[i] ;
                   // this.can_msgs[getMsgs[i].id].id = getMsgs[i].id;
                   // this.can_msgs[getMsgs[i].id].dlc = getMsgs[i].dlc;
@@ -294,10 +292,10 @@
             },
 
 
-            // WOLを実行す�?
+            // WOLを実行す?��?
             sendMac: function () {
 
-                // POST�?ータを作�?�す�?
+                // POST?��?ータを作�??��す�?
 
                 var formdata = new FormData();
                 formdata.append("mac", this.selectItem.mac);
@@ -307,7 +305,7 @@
                 // axios.post("/api/wol", formdata).then((res) => {
                 //     if (res.data.status == "ok") {
                 //         this.alert.type = "alert-success";
-                //         this.alert.msg = "実行しました?�?";
+                //         this.alert.msg = "実行しました??��?";
                 //     } else {
                 //         this.alert.type = "alert-danger";
                 //         this.alert.msg = "エラーが発生しました";
@@ -329,11 +327,11 @@
 <script src = "/Chart.min.js"></script>  
 <script>
 var graphData = {
-  labels: [],  // X軸の�?ータ (時間)
+  labels: [],  // X軸の?��?ータ (時間)
   datasets: [
     {
         label: "Sensor-00",
-        data: [], // Y軸の�?ータ(センシング結果)
+        data: [], // Y軸の?��?ータ(センシング結果)
         fill: false,
         borderColor : "rgba(97,132,254,0.8)",
         backgroundColor : "rgba(97,132,254,0.5)",
@@ -341,7 +339,7 @@ var graphData = {
     },
     {
         label: "Sensor-01",
-        data: [], // Y軸の�?ータ(センシング結果)
+        data: [], // Y軸の?��?ータ(センシング結果)
         fill: false,
         borderColor : "rgba(254,97,132,0.8)",
         backgroundColor : "rgba(254,97,132,0.5)",
@@ -349,7 +347,7 @@ var graphData = {
     },
     {
         label: "Sensor-02",
-        data: [], // Y軸の�?ータ(センシング結果)
+        data: [], // Y軸の?��?ータ(センシング結果)
         fill: false,
         borderColor : "rgba(132,254,97,0.8)",
         backgroundColor : "rgba(132,254,97,0.5)",
@@ -382,7 +380,7 @@ ws.onmessage = function(evt) {
   // var data_x2 = JSON.parse(evt.data)["val2"];
   // var mode = JSON.parse(evt.data)["mode"];
 
-  var msg = JSON.parse(evt.data)["mssges"];
+  var msg = JSON.parse(evt.data)["canmsg"];
   var data_x0 = msg[0].id;
   var data_x1 = msg[0].dlc;
   var data_x2 = msg[0].data[0];
@@ -478,7 +476,6 @@ function OnButtonClick( addval ) {
 
 
 </script>
-
 
 
 </body></html>
