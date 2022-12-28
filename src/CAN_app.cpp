@@ -182,30 +182,39 @@ void setup_CallBack() {
   CAN.onReceive(onReceive);
 }
 
-StaticJsonDocument<2000> candoc;
+StaticJsonDocument<4000> candoc;
 char can_json[3000];
 
 void makeCanMsgJson(){
   int cnt=0;
+  for( int i=0; i<bufNum; i++){
+    if( canbuf[i].txrxFlag == canBuffer::RX ){
+      cnt++;
+    }
+  }
+
   candoc.clear();
   JsonArray canmsgs = candoc.createNestedArray("canmsg");
+  canmsgs[0]["rxnum"] = cnt;
+
   for( int i=0; i<bufNum; i++){
-//  for( int i=0; i<50; i++){
     if( canbuf[i].txrxFlag == canBuffer::RX ){
       canbuf[i].txrxFlag =  canBuffer::NON;
       JsonObject canmsg = canmsgs.createNestedObject();
       canmsg["id"]  = canbuf[i].id;
       canmsg["dlc"] = canbuf[i].dlc;
+      canmsg["cycle"] = canbuf[i].cycleTime;
+
       JsonArray canmsg_data = canmsg.createNestedArray("data");
     
       for( int k=0; k<canbuf[i].dlc; k++){
         canmsg_data.add( canbuf[i].data.u1[k] );    
       }
-      cnt++;
     }
   }
+
   serializeJson(candoc, can_json);
-   Serial.print("RX_ID_num:"); Serial.println(cnt);
+  //Serial.print("RX_ID_num:"); Serial.println(cnt);
 }
 
 void makeCanMsgJsonDummy(){
@@ -221,6 +230,8 @@ void makeCanMsgJsonDummy(){
 
     canmsg_0["id"] = rndID;
     canmsg_0["dlc"] = (rndID%8) + 1;
+    canmsg_0["cycle"] = rndID*10;
+
 
     JsonArray canmsg_0_data = canmsg_0.createNestedArray("data");
     canmsg_0_data.add(random(0,255));

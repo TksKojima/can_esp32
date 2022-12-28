@@ -26,15 +26,11 @@ void setup() {
 }
 
 
-char canMsgJson[600];
-
-StaticJsonDocument<2000> doc;
-
 void loop() {
   static unsigned long curr_prev=0;
   unsigned long curr = millis(); // 現在時刻を更新
 
-  if( curr - curr_prev < 50 ){
+  if( curr - curr_prev < 25 ){
     return;
   }
   curr_prev = curr;
