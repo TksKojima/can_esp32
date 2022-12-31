@@ -11,7 +11,45 @@
 #include <SPIFFS.h>
 
 
+#include <ArduinoOTA.h>
 
+
+
+void ota_setup(){
+  ArduinoOTA.setHostname("esp32can");
+
+  ArduinoOTA
+    .onStart([]() {
+      String type;
+      if (ArduinoOTA.getCommand() == U_FLASH)
+        type = "sketch";
+      else // U_SPIFFS
+        type = "filesystem";
+      Serial.println("Start updating " + type);
+    })
+    .onEnd([]() {
+      Serial.println("\nEnd");
+    })
+    .onProgress([](unsigned int progress, unsigned int total) {
+      Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+    })
+    .onError([](ota_error_t error) {
+      Serial.printf("Error[%u]: ", error);
+      if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+      else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+      else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+      else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+      else if (error == OTA_END_ERROR) Serial.println("End Failed");
+    });
+
+  ArduinoOTA.begin();
+
+}
+
+void ota_loop() {
+  ArduinoOTA.handle();
+
+}
 
 void setup() {
   Serial.begin(115200);
@@ -22,6 +60,9 @@ void setup() {
   wifi_setup( WIFI_AP );  //自�?がWifi発信
   //wifi_setup( WIFI_STA );  //ルータ等がWifi発信
 
+  
+  ota_setup();
+
   Serial.println("SetUpEnd");
 }
 
@@ -29,6 +70,8 @@ void setup() {
 void loop() {
   static unsigned long curr_prev=0;
   unsigned long curr = millis(); // 現在時刻を更新
+
+  ota_loop();
 
   if( curr - curr_prev < 25 ){
     return;
@@ -49,9 +92,6 @@ void loop() {
   wifi_loop();
  
 }
-
-
-
 
 
 

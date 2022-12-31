@@ -84,8 +84,7 @@ void canbuf_send(){
 
 
 void onReceive(int packetSize) {
-  // received a packet
-  //Serial.print("Received ");
+
 
   if (CAN.packetExtended()) {
     Serial.print("extended ");
@@ -99,6 +98,8 @@ void onReceive(int packetSize) {
  // Serial.print("packet with id 0x");
   //Serial.print(CAN.packetId(), HEX);
 
+ int rx_id = -1;
+ int rx_dlc = -1;
   if (CAN.packetRtr()) {
     //Serial.print(" and requested length ");
     //Serial.println(CAN.packetDlc());
@@ -106,8 +107,8 @@ void onReceive(int packetSize) {
     //Serial.print(" and length ");
     //Serial.println(packetSize);
 
-    int rx_id  = CAN.packetId();
-    int rx_dlc = CAN.packetDlc();
+    rx_id  = CAN.packetId();
+    rx_dlc = CAN.packetDlc();
     canbuf[rx_id].dlc = rx_dlc;
     canbuf[rx_id].cycleTime = millis() - canbuf[rx_id].prevTime;
     canbuf[rx_id].prevTime  = millis();
@@ -127,8 +128,16 @@ void onReceive(int packetSize) {
       idx++;
     }
     //Serial.println();
+
+      // received a packet
+    static unsigned long prevtime=millis();  
+    if( millis() - prevtime > 3000 ){
+      Serial.print("Received "); Serial.println(idx);
+      prevtime=millis(); 
+    }       
+ 
   }
-  //Serial.println();
+  //Serial.println();    
 }
 
 void recvDataTimeCount(){
@@ -182,8 +191,8 @@ void setup_CallBack() {
   CAN.onReceive(onReceive);
 }
 
-StaticJsonDocument<4000> candoc;
-char can_json[3000];
+StaticJsonDocument<3000> candoc;
+char can_json[2000];
 
 void makeCanMsgJson(){
   int cnt=0;
