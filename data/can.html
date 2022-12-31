@@ -113,7 +113,7 @@
 
         },
         mounted() {
-              setInterval(this.intervalFunc1000, 200);
+              setInterval(this.intervalFunc1000, 1000);
               setInterval(this.intervalFunc3000, 3000);
               console.log("Starting connection to WebSocket Server")
 
@@ -162,7 +162,7 @@
               this.connection = new WebSocket('ws://192.168.10.108:81/')
               //this.connection = new WebSocket('ws://' + window.location.hostname + ':81/');
               this.connection.onmessage = (event) => {
-                console.log(event.data);
+                //console.log(event.data);
                 //var temptime = new Date();
                 //console.log( temptime.getTime() - this.onrec_time);
                 //this.onrec_time = temptime.getTime();
@@ -210,7 +210,8 @@
 
             },
             sortOutCanMsg:function( getMsgs ){
-              console.log( getMsgs );
+              //console.log( getMsgs );
+              console.log( getMsgs[0].rxnum,  getMsgs.length );
               //console.log( getMsgs.length );
 
 

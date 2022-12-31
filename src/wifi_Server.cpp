@@ -224,8 +224,12 @@ void wifi_loop(){
 
 }
 
-void wifi_websocket_loop( char* websocket_txt, size_t len ){
+void wifi_websocket_loop( ){
   webSocket.loop();
+  
+}
+
+void wifi_websocket_broad_loop( char* websocket_txt, size_t len ){
   //webSocket.broadcastTXT( websocket_txt, strlen(websocket_txt));
   webSocket.broadcastTXT( websocket_txt, len);
 

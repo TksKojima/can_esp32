@@ -1,5 +1,6 @@
 #include <CAN_app.h>
 
+
 //canBuffer canbuf[10];
 const int bufNum = 0x800; 
 canBuffer canbuf[bufNum];
@@ -36,7 +37,7 @@ void canbuf_init(){
     canbuf[i].dlc = i%8 + 1;
     //canbuf[i].txrxFlag = 1;
 
-    if( i<(0x300) ) canbuf[i].txrxFlag = 1;
+    if( i<0x300 ) canbuf[i].txrxFlag = 1;
     else  canbuf[i].txrxFlag = 0;
     
     canbuf[i].cycleTime = canbuf[i].dlc * 100;
@@ -85,15 +86,14 @@ void canbuf_send(){
 
 void onReceive(int packetSize) {
 
-
   if (CAN.packetExtended()) {
     Serial.print("extended ");
   }
 
-  if (CAN.packetRtr()) {
-    // Remote transmission request, packet contains no data
-    //Serial.print("RTR ");
-  }
+  // if (CAN.packetRtr()) {
+  //   // Remote transmission request, packet contains no data
+  //   //Serial.print("RTR ");
+  // }
 
  // Serial.print("packet with id 0x");
   //Serial.print(CAN.packetId(), HEX);
@@ -132,9 +132,13 @@ void onReceive(int packetSize) {
       // received a packet
     static unsigned long prevtime=millis();  
     if( millis() - prevtime > 3000 ){
+        //  makeCanMsgJson();
+        //  wifi_websocket_broad_loop( can_json, strlen(can_json) );
       Serial.print("Received "); Serial.println(idx);
       prevtime=millis(); 
     }       
+
+
  
   }
   //Serial.println();    
@@ -191,12 +195,13 @@ void setup_CallBack() {
   CAN.onReceive(onReceive);
 }
 
-StaticJsonDocument<3000> candoc;
-char can_json[2000];
+StaticJsonDocument<4000> candoc;
+char can_json[3000];
 
 void makeCanMsgJson(){
   int cnt=0;
-  for( int i=0; i<bufNum; i++){
+//  for( int i=0; i<bufNum; i++){
+  for( int i=0; i<100; i++){
     if( canbuf[i].txrxFlag == canBuffer::RX ){
       cnt++;
     }
@@ -206,7 +211,8 @@ void makeCanMsgJson(){
   JsonArray canmsgs = candoc.createNestedArray("canmsg");
   canmsgs[0]["rxnum"] = cnt;
 
-  for( int i=0; i<bufNum; i++){
+  //for( int i=0; i<bufNum; i++){
+  for( int i=0; i<100; i++){
     if( canbuf[i].txrxFlag == canBuffer::RX ){
       canbuf[i].txrxFlag =  canBuffer::NON;
       JsonObject canmsg = canmsgs.createNestedObject();

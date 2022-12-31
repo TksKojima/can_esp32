@@ -69,28 +69,38 @@ void setup() {
 
 void loop() {
   static unsigned long curr_prev=0;
+  static unsigned long curr_prev2=0;  
   unsigned long curr = millis(); // 現在時刻を更新
-
+  unsigned long proctime=0; 
   ota_loop();
 
-  if( curr - curr_prev < 25 ){
-    return;
-  }
-  curr_prev = curr;
+  if( curr - curr_prev > 25 ){
+    makeCanMsgJson();
+    //makeCanMsgJsonDummy();  
+    wifi_websocket_broad_loop( can_json, strlen(can_json) );
+    curr_prev = curr;
+    proctime = millis() - curr;
 
-  // canbuf_send();
+    if( curr - curr_prev2 > 1000 ){
+      Serial.println(proctime);
+      curr_prev2 = curr;
+    }
+
+  }
+
+
+
+ // canbuf_send();
   // delay(1);
 
   //printRecv();
+ 
+
+  //Serial.println(can_json);
+  wifi_websocket_loop();
+   wifi_loop();
   delay(1);
 
-  makeCanMsgJson();
-  //makeCanMsgJsonDummy();
-  
-  wifi_websocket_loop( can_json, strlen(can_json) );
-  //Serial.println(can_json);
-  wifi_loop();
- 
 }
 
 

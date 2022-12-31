@@ -20,7 +20,8 @@ extern  WebSocketsServer webSocket;
 
 void wifi_setup( int wifi_mode );
 void wifi_loop();
-void wifi_websocket_loop( char* websocket_txt, size_t  strlen_websocket_txt ); // 2nd prameter: strlen( websocket_txt )
+void wifi_websocket_loop(); // 2nd prameter: strlen( websocket_txt )
+void wifi_websocket_broad_loop( char* websocket_txt, size_t  strlen_websocket_txt ); // 2nd prameter: strlen( websocket_txt )
 
 void handleRoot();
 void handleRC();
