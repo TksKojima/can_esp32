@@ -200,8 +200,8 @@ char can_json[3000];
 
 void makeCanMsgJson(){
   int cnt=0;
-//  for( int i=0; i<bufNum; i++){
-  for( int i=0; i<100; i++){
+  for( int i=0; i<bufNum; i++){
+//  for( int i=0; i<100; i++){
     if( canbuf[i].txrxFlag == canBuffer::RX ){
       cnt++;
     }
@@ -211,8 +211,14 @@ void makeCanMsgJson(){
   JsonArray canmsgs = candoc.createNestedArray("canmsg");
   canmsgs[0]["rxnum"] = cnt;
 
-  //for( int i=0; i<bufNum; i++){
-  for( int i=0; i<100; i++){
+  int json_cnt=0;
+  static int last_idx=0;
+  for( int j=0; j<bufNum; j++){
+  //for( int i=0; i<100; i++){
+    int i = last_idx + j;
+    if( i >= bufNum ){
+      i = i - bufNum;
+    }
     if( canbuf[i].txrxFlag == canBuffer::RX ){
       canbuf[i].txrxFlag =  canBuffer::NON;
       JsonObject canmsg = canmsgs.createNestedObject();
@@ -225,7 +231,19 @@ void makeCanMsgJson(){
       for( int k=0; k<canbuf[i].dlc; k++){
         canmsg_data.add( canbuf[i].data.u1[k] );    
       }
+
+      json_cnt++;
     }
+    
+    if( json_cnt > 25 ){
+      last_idx = i; 
+      break;
+    }
+
+    if( j == (bufNum-1)){
+      last_idx = 0; 
+    }
+
   }
 
   serializeJson(candoc, can_json);

@@ -160,6 +160,9 @@ void wifi_setup( int wifi_mode ){
   server.serveStatic("/Chart.min.js", SPIFFS, "/Chart.min.js");
   server.serveStatic("/axios.min.js", SPIFFS, "/axios.min.js");
   server.serveStatic("/vue.js", SPIFFS, "/vue.js");
+  server.serveStatic("/js", SPIFFS, "/js");
+  server.serveStatic("/css", SPIFFS, "/css");
+
   server.serveStatic("/can.html", SPIFFS, "/can.html");
   // server.serveStatic("/hoge", SPIFFS, "/Chart.min.jshogehoge");
 
