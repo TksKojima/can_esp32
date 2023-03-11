@@ -5,6 +5,7 @@
 const int bufNum = 0x800; 
 canBuffer canbuf[bufNum];
 
+
 int countInterval = 1000;
 int countMax = 5;
 
@@ -76,7 +77,6 @@ void canbuf_send(){
         canbuf[i].data.u2[3]++; 
         // Serial.print("send id: ");
         // Serial.println(i);
-
 
       }
     }
