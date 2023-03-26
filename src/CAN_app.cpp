@@ -3,7 +3,8 @@
 
 //canBuffer canbuf[10];
 const int bufNum = 0x800; 
-canBuffer canbuf[bufNum];
+canRxBuffer canbuf[bufNum];
+
 
 
 int countInterval = 1000;
@@ -32,14 +33,14 @@ void can_loop(){
 
 
 void canbuf_init(){
-//  for( int i=0; i<0x800; i++){
   for( int i=0; i<bufNum; i++){
     canbuf[i].id = i;
     canbuf[i].dlc = i%8 + 1;
     //canbuf[i].txrxFlag = 1;
 
-    if( i<0x300 ) canbuf[i].txrxFlag = 1;
-    else  canbuf[i].txrxFlag = 0;
+    // if( i<0x300 ) canbuf[i].txrxFlag = 1;
+    // else  canbuf[i].txrxFlag = 0;
+    canbuf[i].txrxFlag = 0;    
     
     canbuf[i].cycleTime = canbuf[i].dlc * 100;
     if( i<10 ) {
@@ -52,10 +53,30 @@ void canbuf_init(){
     canbuf[i].data.u2[3] = 0;
 
     canbuf[i].prevTime = millis();
-
   }
+
 }
 
+void canTxbuf_test(){
+
+}
+void canTxbuf_set( int id, int dlc, int cycle, char *data, int txflag ){
+  canbuf[id].dlc = dlc;
+  canbuf[id].cycleTime = cycle;
+  for( int n=0; n<8; n++){
+    canbuf[id].data.u1[n] = data[n];
+  }
+  if( txflag == 1 ){
+    canbuf[id].txrxFlag = canTxRxFlag::TX;
+  }else{
+    canbuf[id].txrxFlag = 0;
+  }
+  //canbuf[id].prevTime = millis();
+  canbuf[id].noChange.txCnt[0] = millis();
+
+  //Serial.println("can seted ");
+
+}
 
 void canbuf_sendSingle( int id ){
   CAN.beginPacket( id );
@@ -63,26 +84,51 @@ void canbuf_sendSingle( int id ){
     CAN.write( canbuf[id].data.u1[i] );    
   }
   CAN.endPacket();
+
+  // Serial.print("canid: ");
+  // Serial.print(id); 
+  // Serial.print(" data");
+  // Serial.print(" ");
+  // Serial.print(canbuf[id].data.u1[i]);  
+
+
+  // Serial.print("canid: ");
+  // Serial.print(id); 
+  // Serial.print("cycle: ");
+  // Serial.print(cycle);    
+  // Serial.print("txrxFlag: ");
+  // Serial.print(txflag);   
+  // for( int n=0; n<8; n++){
+  //   Serial.print(" ");
+  //   Serial.print(canbuf[id].data.u1[n]);    
+
+  // } 
+  // Serial.print("time: ");
+  // Serial.println(canbuf[id].prevTime);    
+
+
 }
 
-
 void canbuf_send(){
-
-//  for( int i=0; i<0x800; i++){
   for( int i=0; i<bufNum; i++){
-    if( canbuf[i].txrxFlag == canBuffer::TX){
+    if( canbuf[i].txrxFlag == canTxRxFlag::TX){
+      if( millis() - canbuf[i].noChange.txCnt[0]  >= canbuf[i].cycleTime + 2000 ){ //サイクルタイム＋閾値ミリ秒の間、setされなかったら途絶判定 
+        canbuf[i].txrxFlag = canTxRxFlag::NON;
+        continue;
+      }
+
       if( millis() - canbuf[i].prevTime >= canbuf[i].cycleTime ){
+        //Serial.print("before send");
         canbuf_sendSingle(i);
+        //Serial.print("after send");
         canbuf[i].prevTime = millis();
-        canbuf[i].data.u2[3]++; 
+        //canbuf[i].data.u2[3]++; 
         // Serial.print("send id: ");
         // Serial.println(i);
-
       }
     }
   }
 }
-
 
 void onReceive(int packetSize) {
 
@@ -112,7 +158,7 @@ void onReceive(int packetSize) {
     canbuf[rx_id].dlc = rx_dlc;
     canbuf[rx_id].cycleTime = millis() - canbuf[rx_id].prevTime;
     canbuf[rx_id].prevTime  = millis();
-    canbuf[rx_id].txrxFlag = canBuffer::RX;
+    canbuf[rx_id].txrxFlag = canTxRxFlag::RX;
 
     // only print packet data for non-RTR packets
     int idx = 0;
@@ -121,7 +167,7 @@ void onReceive(int packetSize) {
       //Serial.print(", ");
       char readData = (char)CAN.read();
       if( canbuf[rx_id].data.u1[idx] != readData){
-          canbuf[rx_id].noChangeCnt[idx] = 0;
+          canbuf[rx_id].noChange.rxCnt[idx] = 0;
       }
       canbuf[rx_id].data.u1[idx] = readData;
       canbuf[rx_id].noRecvCnt[idx] = 0;
@@ -137,8 +183,6 @@ void onReceive(int packetSize) {
       Serial.print("Received "); Serial.println(idx);
       prevtime=millis(); 
     }       
-
-
  
   }
   //Serial.println();    
@@ -148,9 +192,9 @@ void recvDataTimeCount(){
   static unsigned long prevtime=millis();
   if( millis() - prevtime > countInterval ){
     for( int i=0; i<bufNum; i++){
-      if( canbuf[i].txrxFlag == canBuffer::RX ){
+      if( canbuf[i].txrxFlag == canTxRxFlag::RX ){
         for( int k=0; k<canbuf[i].dlc; k++){
-          canbuf[i].noChangeCnt[k] += ( canbuf[i].noChangeCnt[k] >= countMax ? 0 : 1 );
+          canbuf[i].noChange.rxCnt[k] += ( canbuf[i].noChange.rxCnt[k] >= countMax ? 0 : 1 );
           canbuf[i].noRecvCnt[k] += ( canbuf[i].noRecvCnt[k] >= countMax ? 0 : 1 );
 
         }
@@ -164,8 +208,8 @@ void printRecv(){
    Serial.println("printRecv");
 //    for( int i=0; i<0x800; i++){
     for( int i=0; i<bufNum; i++){
-      if( canbuf[i].txrxFlag == canBuffer::RX ){
-        canbuf[i].txrxFlag =  canBuffer::NON;
+      if( canbuf[i].txrxFlag == canTxRxFlag::RX ){
+        canbuf[i].txrxFlag =  canTxRxFlag::NON;
         Serial.print(" ID: ");
         Serial.print(i, HEX);
         Serial.print(" cycl: ");
@@ -202,7 +246,7 @@ void makeCanMsgJson(){
   int cnt=0;
   for( int i=0; i<bufNum; i++){
 //  for( int i=0; i<100; i++){
-    if( canbuf[i].txrxFlag == canBuffer::RX ){
+    if( canbuf[i].txrxFlag == canTxRxFlag::RX ){
       cnt++;
     }
   }
@@ -219,8 +263,8 @@ void makeCanMsgJson(){
     if( i >= bufNum ){
       i = i - bufNum;
     }
-    if( canbuf[i].txrxFlag == canBuffer::RX ){
-      canbuf[i].txrxFlag =  canBuffer::NON;
+    if( canbuf[i].txrxFlag == canTxRxFlag::RX ){
+      canbuf[i].txrxFlag =  canTxRxFlag::NON;
       JsonObject canmsg = canmsgs.createNestedObject();
       canmsg["id"]  = canbuf[i].id;
       canmsg["dlc"] = canbuf[i].dlc;

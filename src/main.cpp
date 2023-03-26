@@ -82,16 +82,14 @@ void loop() {
     proctime = millis() - curr;
 
     if( curr - curr_prev2 > 1000 ){
-      Serial.println(proctime);
+      //Serial.println(proctime);
       curr_prev2 = curr;
     }
 
   }
 
-
-
- // canbuf_send();
-  // delay(1);
+  canbuf_send();
+  //delay(50);
 
   //printRecv();
  

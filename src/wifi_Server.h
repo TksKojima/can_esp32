@@ -18,6 +18,7 @@ extern int dat1_input;
 extern char* websocketOutput; 
 extern  WebSocketsServer webSocket;
 
+
 void wifi_setup( int wifi_mode );
 void wifi_loop();
 void wifi_websocket_loop(); // 2nd prameter: strlen( websocket_txt )
@@ -33,6 +34,7 @@ void handlePlot1();
 void handlePlot2();
 void handlePlot3();
 void handlePlot4();
+void handlePost();
 
 void handleVueJs();
 void handleAxiosJs();

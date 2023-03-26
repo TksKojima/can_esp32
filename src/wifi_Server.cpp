@@ -1,7 +1,8 @@
+
 #include "wifi_Server.h"
 
 #include "ArduinoJson-v6.19.4.h"
-
+#include <CAN_app.h>
 #include "index_html.h" // web server root index
 
 //SPIFFSアップロード
@@ -163,8 +164,10 @@ void wifi_setup( int wifi_mode ){
   server.serveStatic("/js", SPIFFS, "/js");
   server.serveStatic("/css", SPIFFS, "/css");
 
-  server.serveStatic("/can.html", SPIFFS, "/can.html");
+  server.serveStatic("/index.html", SPIFFS, "/index.html");
   // server.serveStatic("/hoge", SPIFFS, "/Chart.min.jshogehoge");
+
+  server.enableCORS(); //This is the magic
 
   server.on("/", handleRoot);
   
@@ -177,6 +180,9 @@ void wifi_setup( int wifi_mode ){
   server.on("/plot2", handlePlot2);
   server.on("/plot3", handlePlot3);
   server.on("/plot4", handlePlot4);
+  server.on("/post",  handlePost);
+
+
   // server.on("/vue.js", handleVueJs);
   // server.on("/axios.min.js", handleAxiosJs);
 
@@ -240,8 +246,8 @@ void wifi_websocket_broad_loop( char* websocket_txt, size_t len ){
 
 // Webコンテンツのイベントハンドラ
 void handlePlot() {
-// can.htmlより読み込み
-  handleFileRead("/can.html");
+// index.htmlより読み込み
+  handleFileRead("/index.html");
 
 }
 
@@ -311,7 +317,74 @@ void handleRC() { //ブラウザのUIを操作した結果のJSからアクセスされる
   Serial.println();
   server.send(200, "text/plain", "\n\n\n");
 }
- 
+
+void handlePost() {
+  if (server.method() == HTTP_POST) {
+    String postData = server.arg("plain");  // POSTデータを文字列として取得
+
+    // JSONパーサーを使用してJSONデータを解析する
+    DynamicJsonDocument doc(6144);   // 解析用のJSONオブジェクトを生成
+    DeserializationError error = deserializeJson(doc, postData);  // JSONデータを解析する
+
+    if (error) {
+      Serial.print("deserializeJson() failed: ");
+      Serial.println(error.f_str());
+
+    } else {
+      // 配列要素を1つずつ処理する
+      JsonArray array = doc.as<JsonArray>();
+      for (JsonVariant obj : array) {
+        int id = obj["canid"];                 // "id"プロパティを取得
+        int cycle = obj["cycle"];           // "cycle"プロパティを取得
+        int dlc = obj["dlc"];           // "cycle"プロパティを取得
+        JsonArray data = obj["data"];       // "data"プロパティを取得
+        int trans = obj["trans"];           // "cycle"プロパティを取得
+
+        //  Serial.print("canid: ");
+        //  Serial.print(id);
+        //  Serial.print(", dlc: ");
+        //  Serial.print(dlc);
+        //  Serial.print(", cycle: ");
+        //  Serial.print(cycle);
+        //  Serial.print(", trans: ");
+        //  Serial.print(trans);
+        //  Serial.print(", data: ");
+        char inputdata[8];
+        int i=0;
+        for (JsonVariant value : data) {
+          unsigned char v = value.as<int>();          // 配列要素をint型に変換
+          // ここで取得したデータを処理する
+        //  Serial.print(v);
+        //  Serial.print(", ");
+         inputdata[i] = v; i++;
+
+        }
+        canTxbuf_test();
+       // Serial.print("posted ");
+
+        canTxbuf_set( id, dlc, cycle, inputdata, trans);
+
+        //  Serial.println("");
+
+
+      }
+    }
+
+    //Serial.println("data recv");
+    //CROSエラー回避のヘッダを追加
+    // server.sendHeader("Access-Control-Allow-Origin", "http://localhost:8080/");
+    // server.sendHeader("Access-Control-Allow-Headers", "Content-Type");
+     
+    server.send(200, "text/plain", "Data received");
+    //http.StatusOK
+  } else {
+    //server.send(405, "text/plain", "Method Not Allowed");
+    server.send(200, "text/plain", "Method Not Allowed");
+
+  }
+}
+
+
 void handleNotFound() {
   String message = "File Not Found\n\n";
   message += "URI: ";
