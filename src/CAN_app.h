@@ -74,7 +74,7 @@ void can_init();
 void can_setTestFlag( int txtest, int rxtest );
 void can_loop();
 void canbuf_init();
-void canTxbuf_set( int id, int dlc, int cycle, unsigned char *data, int txflag  );
+void canTxbuf_set( int id, char dlc, int cycle, unsigned char *data, int txflag  );
 void canTxbuf_set_test( );
 void canbuf_send();
 void canbuf_sendSingle( int id );
