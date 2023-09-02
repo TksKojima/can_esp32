@@ -5,10 +5,12 @@
 const int bufNum = 0x800; 
 canRxBuffer canbuf[bufNum];
 
-
+int tx_test_flag = 0;
+int rx_test_flag = 0;
 
 int countInterval = 1000;
 int countMax = 5;
+
 
 void can_init(){
    Serial.println("CAN Sender");
@@ -27,52 +29,69 @@ void can_init(){
   CAN.onReceive(onReceive);
 }
 
-void can_loop(){
-  
+// tx_test_flagが１だと、テスト用のID１～３０の適当なCANメッセージを送信
+// rx_test_flagが１だと、ESP32のシリアルで受信データを表示
+void can_setTestFlag( int txtest, int rxtest ){ //loopの前ぐらいに置く
+  tx_test_flag = txtest;
+  rx_test_flag = rxtest;
+
 }
 
+void can_loop(){
+
+  if( tx_test_flag ){
+    canTxbuf_set_test();
+  }
+
+  canbuf_send();
+  
+}
 
 void canbuf_init(){
   for( int i=0; i<bufNum; i++){
     canbuf[i].id = i;
-    canbuf[i].dlc = i%8 + 1;
-    //canbuf[i].txrxFlag = 1;
 
-    // if( i<0x300 ) canbuf[i].txrxFlag = 1;
-    // else  canbuf[i].txrxFlag = 0;
+    canbuf[i].dlc = 1;
     canbuf[i].txrxFlag = 0;    
-    
-    canbuf[i].cycleTime = canbuf[i].dlc * 100;
-    if( i<10 ) {
-        canbuf[i].cycleTime = canbuf[i].dlc  * 10;
-    }
-
-    canbuf[i].data.u2[0] = 0x1234;
-    canbuf[i].data.u2[1] = 0x5678;
-    canbuf[i].data.u2[2] = 0x9abc ;
+    canbuf[i].cycleTime = 999;
+    canbuf[i].data.u2[0] = 0;
+    canbuf[i].data.u2[1] = 0;
+    canbuf[i].data.u2[2] = 0;
     canbuf[i].data.u2[3] = 0;
-
+    
     canbuf[i].prevTime = millis();
   }
 
 }
 
-void canTxbuf_test(){
-  char testdata[8];
-  testdata[0] = 192;
-  testdata[1] = 168;
-  testdata[2] = 10;
-  testdata[3] = 10;
-  testdata[4] = 0;
-  testdata[5] = 4;
-  testdata[6] = 0;
-  testdata[7] = 0;
+void canTxbuf_set_test(){
+  // unsigned char  testdata[8];
+  // testdata[0] = 192;
+  // testdata[1] = 168;
+  // testdata[2] = 10;
+  // testdata[3] = 10;
+  // testdata[4] = 0;
+  // testdata[5] = 4;
+  // testdata[6] = 0;
+  // testdata[7] = 0;
+  // canTxbuf_set( 0x732, 8, 732, testdata, 1);
 
-  canTxbuf_set( 765, 8, 100, testdata, 1);
-  
+  for( int i=1; i<=30; i++){
+    canbuf[i].dlc = i%8 + 1;
+    canbuf[i].txrxFlag = 1;
+    canbuf[i].cycleTime = canbuf[i].dlc * 100;
+    if( i<5 ) {
+        canbuf[i].cycleTime = canbuf[i].dlc  * 10;
+    }
+    canbuf[i].data.u2[0] = 0x1234;
+    canbuf[i].data.u2[1] = 0x5678;
+    canbuf[i].data.u2[2] = 0x9abc ;
+    canbuf[i].data.u2[3] = 0;
+    canTxbuf_set( i, canbuf[i].dlc, canbuf[i].cycleTime, canbuf[i].data.u1, 1 );
+  }  
 }
 
-void canTxbuf_set( int id, int dlc, int cycle, char *data, int txflag ){
+void canTxbuf_set( int id, int dlc, int cycle, unsigned char *data, int txflag ){
   canbuf[id].dlc = dlc;
   canbuf[id].cycleTime = cycle;
   for( int n=0; n<8; n++){
@@ -103,22 +122,19 @@ void canbuf_sendSingle( int id ){
   // Serial.print(" ");
   // Serial.print(canbuf[id].data.u1[i]);  
 
+  if( tx_test_flag == 1 ){
+    Serial.print("canid: ");
+    Serial.print(id); 
+    Serial.print(" cycle: ");
+    Serial.print(canbuf[id].cycleTime);    
+    for( int n=0; n<8; n++){
+      Serial.print(" ");
+      Serial.print(canbuf[id].data.u1[n]);    
 
-  // Serial.print("canid: ");
-  // Serial.print(id); 
-  // Serial.print("cycle: ");
-  // Serial.print(cycle);    
-  // Serial.print("txrxFlag: ");
-  // Serial.print(txflag);   
-  // for( int n=0; n<8; n++){
-  //   Serial.print(" ");
-  //   Serial.print(canbuf[id].data.u1[n]);    
-
-  // } 
-  // Serial.print("time: ");
-  // Serial.println(canbuf[id].prevTime);    
-
-
+    } 
+    Serial.print(" time: ");
+    Serial.println(canbuf[id].prevTime);    
+  }
 }
 
 void canbuf_send(){
@@ -153,8 +169,7 @@ void onReceive(int packetSize) {
   //   //Serial.print("RTR ");
   // }
 
- // Serial.print("packet with id 0x");
-  //Serial.print(CAN.packetId(), HEX);
+
 
  int rx_id = -1;
  int rx_dlc = -1;
@@ -162,8 +177,7 @@ void onReceive(int packetSize) {
     //Serial.print(" and requested length ");
     //Serial.println(CAN.packetDlc());
   } else {
-    //Serial.print(" and length ");
-    //Serial.println(packetSize);
+
 
     rx_id  = CAN.packetId();
     rx_dlc = CAN.packetDlc();
@@ -172,12 +186,26 @@ void onReceive(int packetSize) {
     canbuf[rx_id].prevTime  = millis();
     canbuf[rx_id].txrxFlag = canTxRxFlag::RX;
 
+  if( rx_test_flag == 1 ){
+    Serial.print("packet with id 0x");
+    Serial.print(CAN.packetId(), HEX);    //Serial.print(" and length ");
+    //Serial.println(packetSize);
+    Serial.print(" dlc: ");
+    Serial.print( rx_dlc );
+    Serial.print(" size: ");
+    Serial.print( packetSize );
+
+  }
+
     // only print packet data for non-RTR packets
     int idx = 0;
     while (CAN.available()) {
-      //Serial.print((char)CAN.read(), HEX );
-      //Serial.print(", ");
       char readData = (char)CAN.read();
+      if( rx_test_flag == 1 ){
+        Serial.print(" ");
+        Serial.print( readData, HEX );
+        Serial.print(", ");
+      }
       if( canbuf[rx_id].data.u1[idx] != readData){
           canbuf[rx_id].noChange.rxCnt[idx] = 0;
       }
@@ -185,7 +213,10 @@ void onReceive(int packetSize) {
       canbuf[rx_id].noRecvCnt[idx] = 0;
       idx++;
     }
-    //Serial.println();
+
+    if( rx_test_flag == 1 ){
+      Serial.println();
+    }
 
       // received a packet
     static unsigned long prevtime=millis();  

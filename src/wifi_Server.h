@@ -11,6 +11,12 @@
 #include <ESPmDNS.h>
 
 #include <CAN_app.h>
+#include "eep.h"
+
+#include "ArduinoJson-v6.19.4.h"
+#include <CAN_app.h>
+#include "index_html.h" // web server root index
+
 
 extern int plotMode;
 extern int dat0_input;
@@ -18,8 +24,8 @@ extern int dat1_input;
 extern char* websocketOutput; 
 extern  WebSocketsServer webSocket;
 
-#define  MODE_STA_ONLY   (0)
-#define  MODE_AP_ONLY    (1)
+#define  MODE_AP_ONLY    (0)
+#define  MODE_STA_ONLY   (1)
 #define  MODE_STA_TO_AP  (2)
 
 
@@ -31,6 +37,9 @@ void wifi_setup_withEep(int device_id, int connect_mode,
 int wifi_setup_input(int device_id, int connect_mode,  
   int in_ip[],   int in_gw[], int in_subnet[],  char* in_ssid,  char* in_password, int MAX_SSID_LENGTH, int MAX_PASSWORD_LENGTH );
 
+
+void server_setup();
+
 void wifi_loop();
 void wifi_websocket_loop(); // 2nd prameter: strlen( websocket_txt )
 void wifi_websocket_broad_loop( char* websocket_txt, size_t  strlen_websocket_txt ); // 2nd prameter: strlen( websocket_txt )
@@ -39,6 +48,7 @@ void handleRoot();
 void handleRC();
 void handleNotFound();
 void handleInputPad();
+void handlePostCheck();
 void handlePlot();
 void handlePlot0();
 void handlePlot1();
@@ -46,6 +56,7 @@ void handlePlot2();
 void handlePlot3();
 void handlePlot4();
 void handlePost();
+void handlePostEep();
 
 void handleVueJs();
 void handleAxiosJs();

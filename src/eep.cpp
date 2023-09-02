@@ -13,9 +13,7 @@ void eep_init(){
         EEPROM.commit(); // EEPROMÇÃïœçXÇï€ë∂
     }
 
-
-    eep_read();
-    eep_write();
+    //eep_write();
 }
 
 void eep_loop(){
@@ -84,18 +82,48 @@ void eep_write(){
 
 }
 
-void eep_read(){
+void eep_read_wifi_setting( int* _id, int* _mode, int _ip[], int _gateway[], int _subnet[],  char* _ssid, char* _pass, int charsize ){
     char ssid[EEP_SIZE_ST_SSID] = {0};
     char password[EEP_SIZE_ST_PASS] = {0};
 
-    Serial.println( "Read" );
-    Serial.println( eep_read_num( EEP_ADDR_ID ) );
-    Serial.println( eep_read_num( EEP_ADDR_MODE ) );
+  
+    Serial.println("");
+    Serial.println( "[ EEP Read ]" );
+    Serial.print( "Device ID: " );
+    *_id = eep_read_num( EEP_ADDR_ID );
+    Serial.println( *_id );
 
-    eep_read_str( EEP_ADDR_ST_PASS, password, EEP_SIZE_ST_PASS );
-    eep_read_str( EEP_ADDR_ST_SSID, ssid,     EEP_SIZE_ST_SSID );    
-    Serial.println( password );
-    Serial.println( ssid );
+    Serial.print( "Connect Mode: " );
+    *_mode =  eep_read_num( EEP_ADDR_MODE );
+    Serial.println( *_mode );
+
+    int arrsize = 4;
+    Serial.print( "IP: " );
+    for( int i=0; i<arrsize; i++ ){
+      _ip[i] = eep_read_num( EEP_ADDR_ST_IP + i );
+      Serial.print( _ip[i] ); Serial.print( " " );
+    }
+    Serial.println( "" );
+    Serial.print( "Gateway: " );
+    for( int i=0; i<arrsize; i++ ){
+      _gateway[i] = eep_read_num( EEP_ADDR_ST_GW + i );
+      Serial.print( _gateway[i] ); Serial.print( " " );
+    }
+    Serial.println( "" );
+    Serial.print( "Subnet: " );
+    for( int i=0; i<arrsize; i++ ){
+      _subnet[i] = eep_read_num( EEP_ADDR_ST_SN + i );
+      Serial.print( _subnet[i] ); Serial.print( " " );
+    }
+    Serial.println( "" );
+
+    eep_read_str( EEP_ADDR_ST_PASS, _pass, EEP_SIZE_ST_PASS );
+    Serial.print( "Password: " );
+    //Serial.println( _pass );
+    eep_read_str( EEP_ADDR_ST_SSID, _ssid,     EEP_SIZE_ST_SSID );    
+    Serial.print( "SSID: " );
+    Serial.println( _ssid );
+
 }
 
 int eep_read_num( int addrOffset ){

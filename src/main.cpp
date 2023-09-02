@@ -1,3 +1,20 @@
+/*** How to use
+ ・DIPSW2 が ONのとき設定モード
+ 　ESP32が、SSIDが ”esp_wifi0”（0は設定モード時の暫定デバイスID） のWIFIを発信
+ 　接続してブラウザで
+   http://esp32can0（0は設定モード時の暫定デバイスID）にアクセス可能
+    
+  まずはDIPSW2がOFFのときのノーマルモードのための
+  アクセスモード、IPやサブネット、SSID・パスワードを設定する
+  　
+  DIPスイッチは
+   DIP1：CANピンの終端抵抗のOn/Off、Onのときに物理的に抵抗を接続
+   DIP2：On：設定モード、Off：ノーマルモード
+   DIP3：On：CAN送信テストモード、適当なIDのメッセージを送信 Off：ノーマルモード
+   DIP4：On：CAN受信テストモード、シリアルに受信メッセを表示 Off：ノーマルモード
+
+*/
+
 #include <Arduino.h>
 
 #include <CAN_app.h>
@@ -7,131 +24,151 @@
 
 #include "wifi_Server.h"
 #include "eep.h"
+#include "pcb_setting.h"
+
 
 #include "ArduinoJson-v6.19.4.h"
 #include <SPIFFS.h>
 
 #include <ArduinoOTA.h>
 
-int pcb_SettingSw = 0;
+int pcb_SettingSw = 1;
 int pcb_TestsendSw = 0;
 
 
 void ota_setup(){
-  ArduinoOTA.setHostname("esp32can");
+  // ArduinoOTA.setHostname("esp32can");
 
-  ArduinoOTA
-    .onStart([]() {
-      String type;
-      if (ArduinoOTA.getCommand() == U_FLASH)
-        type = "sketch";
-      else // U_SPIFFS
-        type = "filesystem";
-      Serial.println("Start updating " + type);
-    })
-    .onEnd([]() {
-      Serial.println("\nEnd");
-    })
-    .onProgress([](unsigned int progress, unsigned int total) {
-      Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-    })
-    .onError([](ota_error_t error) {
-      Serial.printf("Error[%u]: ", error);
-      if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-      else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-      else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-      else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-      else if (error == OTA_END_ERROR) Serial.println("End Failed");
-    });
+  // ArduinoOTA
+  //   .onStart([]() {
+  //     String type;
+  //     if (ArduinoOTA.getCommand() == U_FLASH)
+  //       type = "sketch";
+  //     else // U_SPIFFS
+  //       type = "filesystem";
+  //     Serial.println("Start updating " + type);
+  //   })
+  //   .onEnd([]() {
+  //     Serial.println("\nEnd");
+  //   })
+  //   .onProgress([](unsigned int progress, unsigned int total) {
+  //     Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+  //   })
+  //   .onError([](ota_error_t error) {
+  //     Serial.printf("Error[%u]: ", error);
+  //     if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+  //     else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+  //     else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+  //     else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+  //     else if (error == OTA_END_ERROR) Serial.println("End Failed");
+  //   });
 
-  ArduinoOTA.begin();
+  // ArduinoOTA.begin();
 
 }
 
 void ota_loop() {
   ArduinoOTA.handle();
-
 }
 
-const char* ssid_ap_main = "Espwifi";
-const char* password_ap_main = "98765432";
+//セッティングONのときの設定
+const char* set_ssid = "EspWiFi";
+const char* set_password = "98765432";
+int set_ip[] ={ 192, 168, 0, 123 };
+int set_gt[] ={ 192, 168, 0, 1 };
+int set_subnet[] ={ 255,255,255,0 };
 
-const char* ssid_sta_main = "safari_wifi";
-const char* password_sta_main = "87654321";
+int eep_ip[] = { 0, 0, 0, 0 };
+int eep_gt[] = { 0, 0, 0, 0 };
+int eep_subnet[] = { 0, 0, 0, 0 };
 
-// char* ssid_sta_main = "MYASUS";
-// char* password_sta_main = "soseken2013";
+int eep_id   = 0;
+int eep_mode = MODE_AP_ONLY;
+// char eep_ssid[] = "safari_wifi";
+// char eep_pass[] = "87654321";
+char eep_ssid[EEP_SIZE_ST_SSID] = {0};
+char eep_pass[EEP_SIZE_ST_PASS] = {0};
+
+// const char* eep_ssid = "safari_wifi";
+// const char* eep_password = "87654321";
 
 void setup() {
 
   Serial.begin(115200);
-  Serial.println("Start ");
+  Serial.println("[ Start ]");
   while (!Serial);
+  pcb_init();
   can_init();
   eep_init();
-  
-  //wifi_setup( WIFI_AP );  //自分がWifi発信
-  //wifi_setup( WIFI_STA );  //ルータ等がWifi発信
-  int sta_ip[] ={ 192, 168, 10, 200 };
-  int sta_gt[] ={ 192, 168, 10, 1 };
-  int sta_subnet[] ={ 255,255,255,0 };
 
-  int ap_ip[] ={ 192, 168, 1, 200 };
-  int ap_gt[] ={ 192, 168, 1, 1 };
-  int ap_subnet[] ={ 255,255,255,0 };
+  eep_read_wifi_setting( &eep_id, &eep_mode, eep_ip, eep_gt, eep_subnet, eep_ssid, eep_pass, EEP_SIZE_CHAR );
 
-  int in_ip[] ={ 192, 168, 1, 200 };
-  int in_gt[] ={ 192, 168, 1, 1 };
-  int in_subnet[] ={ 255,255,255,0 };
+  char set_ssid_withid[EEP_SIZE_CHAR];
+  char id_char[3];  
+  char ip_char[4];  
 
-  int eep_id   = 0;
-  int eep_mode = MODE_AP_ONLY;
+  snprintf( id_char, sizeof(id_char), "%d", eep_id );  // 数値を文字列に変換
 
+  strcpy(set_ssid_withid, set_ssid);  // ベースの文字列をコピー
+  strcat(set_ssid_withid, "-id");  // 数値を追加
+  strcat(set_ssid_withid, id_char);  // 数値を追加
+  if( eep_mode == MODE_AP_ONLY ){
+    strcat(set_ssid_withid, "-AP");  // 数値を追加
+  }else if( eep_mode == MODE_STA_ONLY  ){
+    strcat(set_ssid_withid, "-STA");  // 数値を追加
+  }else if( eep_mode == MODE_STA_TO_AP  ){
+    strcat(set_ssid_withid, "-S2A");  // 数値を追加
+  }
+    strcat(set_ssid_withid, "-");  // 数値を追加
+
+  for( int i=0; i<4; i++ ){
+    snprintf( ip_char, sizeof(ip_char), "%d", eep_ip[i] );  // 数値を文字列に変換
+    strcat(set_ssid_withid, ip_char);  // 数値を追加
+
+  }
+
+
+
+
+  if( digitalRead(DIPSW_PIN2) == HIGH ){
+    pcb_SettingSw = 1;
+  }else{
+    pcb_SettingSw = 0;
+  }
+
+  //DIPスイッチからの入力がOFFのときは通常モード
   if( pcb_SettingSw == 0 ){
-    // wifi_setup_withEep( 7, 0,
-    //   sta_ip, sta_gt, sta_subnet, const_cast<char*>(ssid_sta_main), const_cast<char*>(password_sta_main), 
-    //   ap_ip, ap_gt, ap_subnet, const_cast<char*>(ssid_ap_main), const_cast<char*>(password_ap_main), EEP_SIZE_ST_SSID, EEP_SIZE_ST_PASS);
-
-    wifi_setup_input( 1, 0,
-       in_ip, in_gt, in_subnet, const_cast<char*>(ssid_ap_main), const_cast<char*>(password_ap_main), EEP_SIZE_ST_SSID, EEP_SIZE_ST_PASS);
+    wifi_setup_input( eep_id, eep_mode,
+       eep_ip, eep_gt, eep_subnet, const_cast<char*>(eep_ssid), const_cast<char*>( eep_pass ), EEP_SIZE_ST_SSID, EEP_SIZE_ST_PASS);
 
   }
+  //DIPスイッチからの入力がONのときはセッティングモード
   else{ // pcb_SettingSw == 1
-    wifi_setup( WIFI_AP );  //自分がWifi発信
+    wifi_setup_input( 0, MODE_AP_ONLY,
+       set_ip, set_gt, set_subnet, const_cast<char*>( set_ssid_withid ), const_cast<char*>( set_password ), EEP_SIZE_ST_SSID, EEP_SIZE_ST_PASS);
 
   }
 
-  ota_setup();
+  server_setup();
 
-  Serial.println("SetUpEnd");
 
-// PCB Use
-  pinMode( 21, INPUT); 
-  pinMode( 22, INPUT); 
-  pinMode( 25, INPUT); 
-  pinMode( 26, INPUT); 
-  pinMode( 33, INPUT); 
-  gpio_set_pull_mode(GPIO_NUM_21, GPIO_PULLDOWN_ONLY);
-  gpio_set_pull_mode(GPIO_NUM_22, GPIO_PULLDOWN_ONLY);
-  gpio_set_pull_mode(GPIO_NUM_25, GPIO_PULLDOWN_ONLY);
-  gpio_set_pull_mode(GPIO_NUM_26, GPIO_PULLDOWN_ONLY);
-  gpio_set_pull_mode(GPIO_NUM_33, GPIO_PULLDOWN_ONLY);
-
-  pinMode( 13, INPUT); 
-  pinMode( 16, INPUT); 
-  pinMode( 17, INPUT); 
-  gpio_set_pull_mode(GPIO_NUM_13, GPIO_PULLDOWN_ONLY);
-  gpio_set_pull_mode(GPIO_NUM_16, GPIO_PULLDOWN_ONLY);
-  gpio_set_pull_mode(GPIO_NUM_17, GPIO_PULLDOWN_ONLY);
-
+  //ota_setup();
+  Serial.println("");
+  Serial.println("[ SetUp End ]");
 
 }
 
-void loop(){
-  if( digitalRead(17) == HIGH ){
-    canTxbuf_test();
+void loop_test(){
+  if( digitalRead(DIPSW_PIN2) == HIGH || digitalRead(DIPSW_PIN3) == HIGH || digitalRead(DIPSW_PIN4) == HIGH ){
+    digitalWrite( LED_PIN, HIGH );
   }
-  canbuf_send();
+  else{
+    digitalWrite( LED_PIN, LOW );    
+  }
+
+  
+
+  //canbuf_send();
 
   // Serial.print(" 21: ");
   // Serial.print(digitalRead(21));
@@ -157,7 +194,7 @@ void loop(){
   delay(1);
 }
 
-void loop_bu() {
+void loop() {
   static unsigned long curr_prev=0;
   static unsigned long curr_prev2=0;  
   unsigned long curr = millis(); // 現在時刻を更新
@@ -178,19 +215,18 @@ void loop_bu() {
 
   }
 
-  if( digitalRead(17) == true ){
-    canTxbuf_test();
-  }
+  loop_test();
 
-  canbuf_send();
+  can_setTestFlag( digitalRead(DIPSW_PIN3) , digitalRead(DIPSW_PIN4) );
+  can_loop();
+
   //delay(50);
 
   //printRecv();
    //Serial.println(can_json);
 
-  // 230508 
-  // wifi_websocket_loop();
-  // wifi_loop();
+  wifi_websocket_loop();
+  wifi_loop();
 
   delay(1);
 

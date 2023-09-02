@@ -21,6 +21,7 @@
 #define EEP_SIZE_AP_SN 4 // sub net
 #define EEP_SIZE_AP_SSID 32
 #define EEP_SIZE_AP_PASS 32
+#define EEP_SIZE_CHAR 32
 
 
 #define EEP_ADDR_ID    0
@@ -42,9 +43,9 @@ void eep_loop();
 
 void eep_write();
 void eep_write_num( int addrOffset, int num );
-void eep_write_str( int addrOffset, char* str, int size );
+void eep_write_str( int addrOffset, const char* str, int size );
 
-void eep_read();
+void eep_read_wifi_setting( int* _id, int* _mode, int _ip[], int _gateway[], int _subnet[],  char* _ssid, char* pass, int charsize  );
 int  eep_read_num( int addrOffset );
 void eep_read_str( int addrOffset, char* str, int size );
 

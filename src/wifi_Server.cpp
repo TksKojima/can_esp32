@@ -1,11 +1,8 @@
 
 #include "wifi_Server.h"
 
-#include "ArduinoJson-v6.19.4.h"
-#include <CAN_app.h>
-#include "index_html.h" // web server root index
 
-//SPIFFSƒAƒbƒvƒ[ƒh
+//SPIFFSã‚¢ãƒƒãƒ—ãƒ­ãƒ¼ãƒ‰
 //C:\Users\user\.platformio\penv\Scripts\platformio.exe run --target uploadfs 
 
 // input 
@@ -17,12 +14,12 @@ int dat3_input = 0;
 int plotMode = 0;
 
 WebServer server(80);
-// WebsocketƒT[ƒo[ IPƒAƒhƒŒƒX:81
-WebSocketsServer webSocket = WebSocketsServer(81); // 81”Ôƒ|[ƒg
+// Websocketã‚µãƒ¼ãƒãƒ¼ IPã‚¢ãƒ‰ãƒ¬ã‚¹:81
+WebSocketsServer webSocket = WebSocketsServer(81); // 81ç•ªãƒãƒ¼ãƒˆ
 
 //char* webSocketOutput ="";
 
-const char* ssid_ap = "wifi";
+const char* ssid_ap = "wifi-wifi";
 const char* password_ap = "12345678";
 
 // const char* ssid_sta = "MYASUS";
@@ -34,25 +31,25 @@ const char* password_sta = "87654321";
 
 // AP mode
 // const IPAddress ip(192, 168, 0, 55);
-// const IPAddress gateway(192, 168, 0, 55); //gateway‚ÌIPƒAƒhƒŒƒX
+// const IPAddress gateway(192, 168, 0, 55); //gatewayã®IPã‚¢ãƒ‰ãƒ¬ã‚¹
 
 // MYASUS
 // const IPAddress ip(192, 168, 43, 149);
-// const IPAddress gateway(192, 168, 43, 149); //gateway‚ÌIPƒAƒhƒŒƒX
+// const IPAddress gateway(192, 168, 43, 149); //gatewayã®IPã‚¢ãƒ‰ãƒ¬ã‚¹
 // const IPAddress subnet(255,255,255,0);
 
 // Kojima Rooter
 // const IPAddress ip(192, 168, 10, 108);
-// const IPAddress gateway(192, 168, 10, 108); //gateway‚ÌIPƒAƒhƒŒƒX
+// const IPAddress gateway(192, 168, 10, 108); //gatewayã®IPã‚¢ãƒ‰ãƒ¬ã‚¹
 // const IPAddress subnet(255,255,255,0);
 
 IPAddress ip(192, 168, 10, 108);
-IPAddress gateway(192, 168, 10, 108); //gateway‚ÌIPƒAƒhƒŒƒX
+IPAddress gateway(192, 168, 10, 108); //gatewayã®IPã‚¢ãƒ‰ãƒ¬ã‚¹
 IPAddress subnet(255,255,255,0);
 
 
 
-// ƒZƒ“ƒT‚Ìƒf[ƒ^(JSONŒ`®)
+// ã‚»ãƒ³ã‚µã®ãƒ‡ãƒ¼ã‚¿(JSONå½¢å¼)
 //const char SENSOR_JSON[] PROGMEM = R"=====({"val1":%.1f})=====";
 //const char SENSOR_JSON[] PROGMEM = R"=====({"val0":%.1f, "val1":%.1f, "val2":%.1f, "str0":"%s", "str1":"%s", "str2":"%s"})=====";
 //const char SENSOR_JSON[] PROGMEM = R"=====({"val0":%.1f, "val1":%.1f, "val2":%.1f, "mode":%d})=====";
@@ -60,27 +57,27 @@ IPAddress subnet(255,255,255,0);
 
 
 
-// // WebƒRƒ“ƒeƒ“ƒc‚ÌƒCƒxƒ“ƒgƒnƒ“ƒhƒ‰
-// // ƒZƒ“ƒT‚Ìƒf[ƒ^(JSONŒ`®)
+// // Webã‚³ãƒ³ãƒ†ãƒ³ãƒ„ã®ã‚¤ãƒ™ãƒ³ãƒˆãƒãƒ³ãƒ‰ãƒ©
+// // ã‚»ãƒ³ã‚µã®ãƒ‡ãƒ¼ã‚¿(JSONå½¢å¼)
 // const char SENSOR_JSON[] PROGMEM = R"=====({"val1":%.1f})=====";
 
-// // ƒf[ƒ^‚ÌXV
+// // ãƒ‡ãƒ¼ã‚¿ã®æ›´æ–°
 // void sensor_loop() {
 //   char payload[16];
 // //=============================================
-// // (4) ƒZƒ“ƒVƒ“ƒO
+// // (4) ã‚»ãƒ³ã‚·ãƒ³ã‚°
 //   float temp = 3;//htu21d.readTemperature();
 //   snprintf_P(payload, sizeof(payload), SENSOR_JSON, temp);
 // //============================================= 
 
-//   // WebSocket‚Åƒf[ƒ^‘—M(‘S’[––‚Öƒuƒ[ƒhƒLƒƒƒXƒg)
+//   // WebSocketã§ãƒ‡ãƒ¼ã‚¿é€ä¿¡(å…¨ç«¯æœ«ã¸ãƒ–ãƒ­ãƒ¼ãƒ‰ã‚­ãƒ£ã‚¹ãƒˆ)
 //   webSocket.broadcastTXT(payload, strlen(payload));
 // //  Serial.println(payload);
 // }
 
 
 
-//  MIMEƒ^ƒCƒv‚ğ„’è
+//  MIMEã‚¿ã‚¤ãƒ—ã‚’æ¨å®š
 String getContentType(String filename){
   if(filename.endsWith(".html") || filename.endsWith(".htm")) return "text/html";
   else if(filename.endsWith(".css")) return "text/css";
@@ -90,10 +87,10 @@ String getContentType(String filename){
   else if(filename.endsWith(".jpg")) return "image/jpeg";
   else return "text/plain";
 }
-//  SPIFSS ‚Ìƒtƒ@ƒCƒ‹‚ğƒNƒ‰ƒCƒAƒ“ƒg‚É“]‘—‚·‚é
+//  SPIFSS ã®ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ã‚¯ãƒ©ã‚¤ã‚¢ãƒ³ãƒˆã«è»¢é€ã™ã‚‹
 bool handleFileRead(String path) {
   Serial.println("handleFileRead: trying to read " + path);
-  // ƒpƒXw’è‚³‚ê‚½ƒtƒ@ƒCƒ‹‚ª‚ ‚ê‚ÎƒNƒ‰ƒCƒAƒ“ƒg‚É‘—M‚·‚é
+  // ãƒ‘ã‚¹æŒ‡å®šã•ã‚ŒãŸãƒ•ã‚¡ã‚¤ãƒ«ãŒã‚ã‚Œã°ã‚¯ãƒ©ã‚¤ã‚¢ãƒ³ãƒˆã«é€ä¿¡ã™ã‚‹
 
   String contentType = getContentType(path);
   if (SPIFFS.exists(path)) {
@@ -114,128 +111,76 @@ bool handleFileRead(String path) {
 int wifi_setup_input(  int device_id, int connect_mode,  
   int in_ip[], int in_gw[], int in_subnet[], char* in_ssid, char* in_password, int MAX_SSID_LENGTH, int MAX_PASSWORD_LENGTH ){
 
-  IPAddress ip(     in_ip[0], in_ip[1], in_ip[2], in_ip[3] + device_id);
-  IPAddress gateway( in_gw[0], in_gw[1], in_gw[2], in_gw[3] ); //gateway‚ÌIPƒAƒhƒŒƒX
+  IPAddress ip(     in_ip[0], in_ip[1], in_ip[2], in_ip[3] );
+  IPAddress gateway( in_gw[0], in_gw[1], in_gw[2], in_gw[3] ); //gatewayã®IPã‚¢ãƒ‰ãƒ¬ã‚¹
   IPAddress subnet( in_subnet[0], in_subnet[1], in_subnet[2], in_subnet[3]);
 
   int cnt = 0;
-  unsigned long connectTimeout = 3000; //10 seconds
+  unsigned long connectTimeout = 10000; //10 seconds
   unsigned long timer_ms = millis();
 
+  Serial.println("");
+  Serial.println("[ WiFi setup ]");
+    
   if( connect_mode == MODE_STA_ONLY  ){
     // Station mode
     Serial.println("STA mode started");
     WiFi.mode(WIFI_STA);
-    WiFi.config(ip, gateway, subnet);
+    //WiFi.config(ip, gateway, subnet);
 
     // Connect to WiFi network
     Serial.print("Connecting to ");
     Serial.println(in_ssid);
+
     WiFi.begin(in_ssid, in_password);
 
     unsigned long start = millis();
-    while (WiFi.status() != WL_CONNECTED && millis() - start < connectTimeout) {
+    while (WiFi.status() != WL_CONNECTED ) {
       delay(500);
       Serial.print(".");
+
+      if( millis() - start > connectTimeout ){
+        Serial.print("Time Out!");
+
+      }
+
     }
+    Serial.println("");
+    Serial.println("Connected! ");
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
+    Serial.print("Gateway: ");
+    Serial.println(WiFi.gatewayIP());
+    Serial.print("Subnet: ");
+    Serial.println(WiFi.subnetMask());
 
   }
   else{  //if( connect_mode == MODE_AP_ONLY ){
     Serial.println("AP mode started");
     WiFi.mode(WIFI_AP);
-    WiFi.config(ip, gateway, subnet);
+    WiFi.softAP(in_ssid, in_password, 1, 0, 4);
+    delay(200);
+    WiFi.softAPConfig( ip,gateway,subnet );
 
     // Connect to WiFi network
     Serial.print("AP SSID: ");
     Serial.println( in_ssid);
-    WiFi.begin(in_ssid, in_password);
-
+    Serial.print("AP IP address: ");
+    Serial.println(WiFi.softAPIP());
+  
   }
 
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("");
-    Serial.println("WiFi connected");
-    Serial.println("IP address: ");
-    Serial.println(WiFi.localIP());
-
-    return 0;
-
-  } else {
-    Serial.println("");
-    Serial.println("WiFi connection failed");
-    return -1;
-
+  char name[20];
+  sprintf(name, "esp32can%d", device_id);
+  if (MDNS.begin( name  ) ) {
+    Serial.print("MDNS: ");
+    Serial.println( name );
   }
+
+  
+  return 0;  
 }
 
-// void wifi_setup_withEep(  int device_id, int connect_mode,  
-//   int sta_ip[], int sta_gw[], int sta_subnet[], char* sta_ssid, char* sta_password, 
-//   int ap_ip[],   int ap_gw[], int ap_subnet[],  char* ap_ssid,  char* ap_password, int MAX_SSID_LENGTH, int MAX_PASSWORD_LENGTH ){
-
-//   // IPAddress ip(     192, 168, 40, 100 + device_id);
-//   // IPAddress gateway(192, 168, 40, 100 + device_id); //gateway‚ÌIPƒAƒhƒŒƒX
-//   // IPAddress subnet(255,255,255,0);
-
-//   // IPAddress ip(     192, 168, 21, 109 + device_id);
-//   // IPAddress gateway(192, 168, 21, 109 + device_id); //gateway‚ÌIPƒAƒhƒŒƒX
-//   // IPAddress subnet(255,255,255,0);
-
-//   IPAddress ip(     sta_ip[0], sta_ip[1], sta_ip[2], sta_ip[3] + device_id);
-//   IPAddress gateway(sta_gw[0], sta_gw[1], sta_gw[2], sta_gw[3] ); //gateway‚ÌIPƒAƒhƒŒƒX
-//   IPAddress subnet(sta_subnet[0], sta_subnet[1], sta_subnet[2], sta_subnet[3]);
-
-
-//   int cnt = 0;
-//   int sta_mode_connected = 0;
-//   unsigned long connectTimeout = 3000; //10 seconds
-//   unsigned long timer_ms = millis();
-
-
-//    // Station mode
-//   WiFi.mode(WIFI_STA);
-//   WiFi.config(ip, gateway, subnet);
-
-//   // Connect to WiFi network
-//   Serial.print("Connecting to ");
-//   Serial.println(ssid_sta);
-
-//   WiFi.begin(ssid_sta, password_sta);
-
-//   unsigned long start = millis();
-//   while (WiFi.status() != WL_CONNECTED && millis() - start < connectTimeout) {
-//     delay(500);
-//     Serial.print(".");
-//   }
-
-//   if (WiFi.status() == WL_CONNECTED) {
-//     Serial.println("");
-//     Serial.println("WiFi connected");
-//     Serial.println("IP address: ");
-//     Serial.println(WiFi.localIP());
-
-//   } else {
-//     // AP mode
-//     Serial.println("");
-//     Serial.println("WiFi connection failed");
-//     Serial.println("Switching to AP mode");
-
-//     WiFi.mode(WIFI_AP);
-//     // IPAddress ap_ip(192, 168, 4, 1);
-//     // IPAddress ap_subnet(255, 255, 255, 0);
-//     //WiFi.softAPConfig(ap_ip, ap_ip, ap_subnet);
-//   IPAddress ip(     ap_ip[0], ap_ip[1], ap_ip[2], ap_ip[3] + device_id);
-//   IPAddress gateway(ap_gw[0], ap_gw[1], ap_gw[2], ap_gw[3] ); //gateway‚ÌIPƒAƒhƒŒƒX
-//   IPAddress subnet(ap_subnet[0], ap_subnet[1], ap_subnet[2], ap_subnet[3]);  
-
-//     char ssid_ap_id[MAX_SSID_LENGTH + 2]; // ƒkƒ‹I’[‚ğŠÜ‚Ş‚½‚ßA+2‚·‚é
-//     std::snprintf(ssid_ap_id, sizeof(ssid_ap_id), "%s_%d", ap_ssid, device_id);    
-//     WiFi.softAP(ssid_ap_id, password_ap);
-//     Serial.println("AP mode started");
-//     Serial.print("AP SSID: ");
-//     Serial.println(ssid_ap_id);
-//   }
-
-// }
 
 void wifi_setup( int wifi_mode ){
   delay(500);
@@ -282,9 +227,13 @@ void wifi_setup( int wifi_mode ){
     Serial.println("MDNS responder started");
   }
 
+  server_setup();  
+}
 
-  // WebƒT[ƒo[‚ÌƒRƒ“ƒeƒ“ƒcİ’è
-  // favicon.ico, Chart.min.js‚Í dataƒtƒHƒ‹ƒ_“à‚É”z’u
+void server_setup(){
+
+  // Webã‚µãƒ¼ãƒãƒ¼ã®ã‚³ãƒ³ãƒ†ãƒ³ãƒ„è¨­å®š
+  // favicon.ico, Chart.min.jsã¯ dataãƒ•ã‚©ãƒ«ãƒ€å†…ã«é…ç½®
   SPIFFS.begin();
   server.serveStatic("/favicon.ico", SPIFFS, "/favicon.ico");
   server.serveStatic("/Chart.min.js", SPIFFS, "/Chart.min.js");
@@ -294,6 +243,7 @@ void wifi_setup( int wifi_mode ){
   server.serveStatic("/css", SPIFFS, "/css");
 
   server.serveStatic("/index.html", SPIFFS, "/index.html");
+  server.serveStatic("/test.html", SPIFFS, "/test.html");
   // server.serveStatic("/hoge", SPIFFS, "/Chart.min.jshogehoge");
 
   server.enableCORS(); //This is the magic
@@ -310,6 +260,9 @@ void wifi_setup( int wifi_mode ){
   server.on("/plot3", handlePlot3);
   server.on("/plot4", handlePlot4);
   server.on("/post",  handlePost);
+  server.on("/posteep",  handlePostEep);
+  server.on("/postcheck",  handlePostCheck);
+
 
 
   // server.on("/vue.js", handleVueJs);
@@ -319,7 +272,7 @@ void wifi_setup( int wifi_mode ){
   server.begin();
   Serial.println("HTTP server started");
 
-  // WebSocketƒT[ƒo[ŠJn
+  // WebSocketã‚µãƒ¼ãƒãƒ¼é–‹å§‹
   webSocket.begin();
 
 }
@@ -373,9 +326,9 @@ void wifi_websocket_broad_loop( char* websocket_txt, size_t len ){
 
 }
 
-// WebƒRƒ“ƒeƒ“ƒc‚ÌƒCƒxƒ“ƒgƒnƒ“ƒhƒ‰
+// Webã‚³ãƒ³ãƒ†ãƒ³ãƒ„ã®ã‚¤ãƒ™ãƒ³ãƒˆãƒãƒ³ãƒ‰ãƒ©
 void handlePlot() {
-// index.html‚æ‚è“Ç‚İ‚İ
+// index.htmlã‚ˆã‚Šèª­ã¿è¾¼ã¿
   handleFileRead("/index.html");
 
 }
@@ -402,7 +355,7 @@ void handlePlot0() {
   handlePlot();
 }
 void handlePlot1() {
-  String s = INDEX_HTML; // index_html.h‚æ‚è“Ç‚İ‚İ
+  String s = INDEX_HTML; // index_html.hã‚ˆã‚Šèª­ã¿è¾¼ã¿
   server.send(200, "text/html", s);
   
 }
@@ -423,18 +376,35 @@ void handlePlot4() {
 }
 
 
-void handleRoot() { //ƒuƒ‰ƒEƒU‚ÌUI
-  //String s = INDEX_HTML; // index_html.h‚æ‚è“Ç‚İ‚İ
+void handleRoot() { //ãƒ–ãƒ©ã‚¦ã‚¶ã®UI
+  //String s = INDEX_HTML; // index_html.hã‚ˆã‚Šèª­ã¿è¾¼ã¿
   //server.send(200, "text/html", s);
   handlePlot4();
 
 }
 
-void handleInputPad() { //ƒuƒ‰ƒEƒU‚ÌUI
+void handleInputPad() { //ãƒ–ãƒ©ã‚¦ã‚¶ã®UI
   server.send(200, "text/html", ""); 
 }
 
-void handleRC() { //ƒuƒ‰ƒEƒU‚ÌUI‚ğ‘€ì‚µ‚½Œ‹‰Ê‚ÌJS‚©‚çƒAƒNƒZƒX‚³‚ê‚é
+void handlePostCheck() { //
+  IPAddress nowIP;
+  if( WiFi.getMode() == WIFI_STA ){
+    nowIP = WiFi.localIP();
+  }else{
+    nowIP = WiFi.softAPIP();
+  }
+   
+  server.send(200, "text/html", nowIP.toString() ); 
+
+  // IPã‚¢ãƒ‰ãƒ¬ã‚¹ã‚’å–å¾—ã—ã€ã‚·ãƒªã‚¢ãƒ«ãƒ¢ãƒ‹ã‚¿ãƒ¼ã«è¡¨ç¤º
+  // Serial.print("IP address: ");
+  // Serial.println( nowIP.toString() );    
+  //Serial.println( WiFi.localIP().toString() );    
+  
+}
+
+void handleRC() { //ãƒ–ãƒ©ã‚¦ã‚¶ã®UIã‚’æ“ä½œã—ãŸçµæœã®JSã‹ã‚‰ã‚¢ã‚¯ã‚»ã‚¹ã•ã‚Œã‚‹
   for (int i = 0; i < server.args(); i++) {
     int Val_i = server.arg(i).toInt();
     Serial.print(server.argName(i) + "=" + server.arg(i) + ", ");
@@ -449,25 +419,26 @@ void handleRC() { //ƒuƒ‰ƒEƒU‚ÌUI‚ğ‘€ì‚µ‚½Œ‹‰Ê‚ÌJS‚©‚çƒAƒNƒZƒX‚³‚ê‚é
 
 void handlePost() {
   if (server.method() == HTTP_POST) {
-    String postData = server.arg("plain");  // POSTƒf[ƒ^‚ğ•¶š—ñ‚Æ‚µ‚Äæ“¾
+    String postData = server.arg("plain");  // POSTãƒ‡ãƒ¼ã‚¿ã‚’æ–‡å­—åˆ—ã¨ã—ã¦å–å¾—
 
-    // JSONƒp[ƒT[‚ğg—p‚µ‚ÄJSONƒf[ƒ^‚ğ‰ğÍ‚·‚é
-    DynamicJsonDocument doc(6144);   // ‰ğÍ—p‚ÌJSONƒIƒuƒWƒFƒNƒg‚ğ¶¬
-    DeserializationError error = deserializeJson(doc, postData);  // JSONƒf[ƒ^‚ğ‰ğÍ‚·‚é
+    // JSONãƒ‘ãƒ¼ã‚µãƒ¼ã‚’ä½¿ç”¨ã—ã¦JSONãƒ‡ãƒ¼ã‚¿ã‚’è§£æã™ã‚‹
+    DynamicJsonDocument doc(6144);   // è§£æç”¨ã®JSONã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’ç”Ÿæˆ
+    DeserializationError error = deserializeJson(doc, postData);  // JSONãƒ‡ãƒ¼ã‚¿ã‚’è§£æã™ã‚‹
+    //Serial.println( postData );
 
     if (error) {
       Serial.print("deserializeJson() failed: ");
       Serial.println(error.f_str());
 
     } else {
-      // ”z—ñ—v‘f‚ğ1‚Â‚¸‚Âˆ—‚·‚é
+      // é…åˆ—è¦ç´ ã‚’1ã¤ãšã¤å‡¦ç†ã™ã‚‹
       JsonArray array = doc.as<JsonArray>();
       for (JsonVariant obj : array) {
-        int id = obj["canid"];                 // "id"ƒvƒƒpƒeƒB‚ğæ“¾
-        int cycle = obj["cycle"];           // "cycle"ƒvƒƒpƒeƒB‚ğæ“¾
-        int dlc = obj["dlc"];           // "cycle"ƒvƒƒpƒeƒB‚ğæ“¾
-        JsonArray data = obj["data"];       // "data"ƒvƒƒpƒeƒB‚ğæ“¾
-        int trans = obj["trans"];           // "cycle"ƒvƒƒpƒeƒB‚ğæ“¾
+        int id = obj["canid"];                 // "id"ãƒ—ãƒ­ãƒ‘ãƒ†ã‚£ã‚’å–å¾—
+        int cycle = obj["cycle"];           // "cycle"ãƒ—ãƒ­ãƒ‘ãƒ†ã‚£ã‚’å–å¾—
+        int dlc = obj["dlc"];           // "cycle"ãƒ—ãƒ­ãƒ‘ãƒ†ã‚£ã‚’å–å¾—
+        JsonArray data = obj["data"];       // "data"ãƒ—ãƒ­ãƒ‘ãƒ†ã‚£ã‚’å–å¾—
+        int trans = obj["trans"];           // "cycle"ãƒ—ãƒ­ãƒ‘ãƒ†ã‚£ã‚’å–å¾—
 
         //  Serial.print("canid: ");
         //  Serial.print(id);
@@ -478,11 +449,11 @@ void handlePost() {
         //  Serial.print(", trans: ");
         //  Serial.print(trans);
         //  Serial.print(", data: ");
-        char inputdata[8];
+        unsigned char inputdata[8];
         int i=0;
         for (JsonVariant value : data) {
-          unsigned char v = value.as<int>();          // ”z—ñ—v‘f‚ğintŒ^‚É•ÏŠ·
-          // ‚±‚±‚Åæ“¾‚µ‚½ƒf[ƒ^‚ğˆ—‚·‚é
+          unsigned char v = value.as<int>();          // é…åˆ—è¦ç´ ã‚’intå‹ã«å¤‰æ›
+          // ã“ã“ã§å–å¾—ã—ãŸãƒ‡ãƒ¼ã‚¿ã‚’å‡¦ç†ã™ã‚‹
         //  Serial.print(v);
         //  Serial.print(", ");
          inputdata[i] = v; i++;
@@ -491,15 +462,12 @@ void handlePost() {
        // Serial.print("posted ");
 
         canTxbuf_set( id, dlc, cycle, inputdata, trans);
-
         //  Serial.println("");
-
-
       }
     }
 
     //Serial.println("data recv");
-    //CROSƒGƒ‰[‰ñ”ğ‚Ìƒwƒbƒ_‚ğ’Ç‰Á
+    //CROSã‚¨ãƒ©ãƒ¼å›é¿ã®ãƒ˜ãƒƒãƒ€ã‚’è¿½åŠ 
     // server.sendHeader("Access-Control-Allow-Origin", "http://localhost:8080/");
     // server.sendHeader("Access-Control-Allow-Headers", "Content-Type");
      
@@ -512,6 +480,106 @@ void handlePost() {
   }
 }
 
+void handlePostEep() {
+  if (server.method() == HTTP_POST) {
+    String postData = server.arg("plain");  // POSTãƒ‡ãƒ¼ã‚¿ã‚’æ–‡å­—åˆ—ã¨ã—ã¦å–å¾—
+
+    // JSONãƒ‘ãƒ¼ã‚µãƒ¼ã‚’ä½¿ç”¨ã—ã¦JSONãƒ‡ãƒ¼ã‚¿ã‚’è§£æã™ã‚‹
+    DynamicJsonDocument doc(6144);   // è§£æç”¨ã®JSONã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’ç”Ÿæˆ
+    DeserializationError error = deserializeJson(doc, postData);  // JSONãƒ‡ãƒ¼ã‚¿ã‚’è§£æã™ã‚‹
+
+    Serial.println( "[ POST EEP Data ]" );
+    Serial.println( postData );
+
+    if (error) {
+      Serial.print("deserializeJson() failed: ");
+      Serial.println(error.f_str());
+
+    } else {
+      int deviceId = doc["device_id"];  // intå‹ã®å€¤ã‚’å–å¾—
+      int connect_mode = doc["connect_mode"]; 
+
+      int ip_addr[]={0,0,0,0};
+      int subnet_mask[]={0,0,0,0};
+      int def_gateway[]={0,0,0,0};
+      const char*  ssid_str = doc["ssid"]; 
+      const char*  password_str = doc["password"];  
+
+      ip_addr[0] = doc["ip_addr0"];
+      ip_addr[1] = doc["ip_addr1"];
+      ip_addr[2] = doc["ip_addr2"];
+      ip_addr[3] = doc["ip_addr3"];
+
+      subnet_mask[0] = doc["subnet0"];
+      subnet_mask[1] = doc["subnet1"];
+      subnet_mask[2] = doc["subnet2"];
+      subnet_mask[3] = doc["subnet3"];
+
+      def_gateway[0] = doc["gateway0"];
+      def_gateway[1] = doc["gateway1"];
+      def_gateway[2] = doc["gateway2"];
+      def_gateway[3] = doc["gateway3"];
+
+      Serial.print("DeviceID: ");
+      Serial.println(deviceId);
+      Serial.print("connect_mode: ");
+      Serial.println(connect_mode);
+      Serial.print("ip_addr: ");
+      Serial.print(ip_addr[0]);
+      Serial.print(ip_addr[1]);
+      Serial.print(ip_addr[2]);
+      Serial.println(ip_addr[3]);
+      Serial.print("subnet: ");
+      Serial.print(subnet_mask[0]);
+      Serial.print(subnet_mask[1]);
+      Serial.print(subnet_mask[2]);
+      Serial.println(subnet_mask[3]);
+      Serial.print("gateway: ");
+      Serial.print(def_gateway[0]);
+      Serial.print(def_gateway[1]);
+      Serial.print(def_gateway[2]);
+      Serial.println(def_gateway[3]);
+      Serial.print( "pass: ");
+      Serial.println( password_str);
+      Serial.print( "ssid: ");
+      Serial.println( ssid_str);
+
+
+      eep_write_num( EEP_ADDR_ID,   deviceId );
+      eep_write_num( EEP_ADDR_MODE, connect_mode );
+
+      for( int i=0; i<4; i++ ){
+        eep_write_num( EEP_ADDR_ST_IP + i,   ip_addr[i] );
+        eep_write_num( EEP_ADDR_ST_SN + i,   subnet_mask[i] );
+        eep_write_num( EEP_ADDR_ST_GW + i,   def_gateway[i] );
+      }
+
+      eep_write_str( EEP_ADDR_ST_PASS, password_str, EEP_SIZE_ST_PASS );
+      eep_write_str( EEP_ADDR_ST_SSID, ssid_str, EEP_SIZE_ST_SSID );
+
+      Serial.println( "EEP Wrote ");
+
+      // Serial.println( "EEP Read ");
+
+      // eep_read_str( EEP_ADDR_AP_PASS, char* str, int size) 
+
+
+    }
+
+    //Serial.println("data recv");
+    //CROSã‚¨ãƒ©ãƒ¼å›é¿ã®ãƒ˜ãƒƒãƒ€ã‚’è¿½åŠ 
+    // server.sendHeader("Access-Control-Allow-Origin", "http://localhost:8080/");
+    // server.sendHeader("Access-Control-Allow-Headers", "Content-Type");
+     
+    server.send(200, "text/plain", "Data received");
+    //http.StatusOK
+
+  } else {
+    //server.send(405, "text/plain", "Method Not Allowed");
+    server.send(200, "text/plain", "Method Not Allowed");
+
+  }
+}
 
 void handleNotFound() {
   String message = "File Not Found\n\n";
