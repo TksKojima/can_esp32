@@ -42,9 +42,14 @@ const char* password_sta = "87654321";
 // const IPAddress subnet(255,255,255,0);
 
 // Kojima Rooter
-const IPAddress ip(192, 168, 10, 108);
-const IPAddress gateway(192, 168, 10, 108); //gatewayのIPアドレス
-const IPAddress subnet(255,255,255,0);
+// const IPAddress ip(192, 168, 10, 108);
+// const IPAddress gateway(192, 168, 10, 108); //gatewayのIPアドレス
+// const IPAddress subnet(255,255,255,0);
+
+IPAddress ip(192, 168, 10, 108);
+IPAddress gateway(192, 168, 10, 108); //gatewayのIPアドレス
+IPAddress subnet(255,255,255,0);
+
 
 
 // センサのデータ(JSON形式)
@@ -106,7 +111,131 @@ bool handleFileRead(String path) {
   }
 }
 
+int wifi_setup_input(  int device_id, int connect_mode,  
+  int in_ip[], int in_gw[], int in_subnet[], char* in_ssid, char* in_password, int MAX_SSID_LENGTH, int MAX_PASSWORD_LENGTH ){
 
+  IPAddress ip(     in_ip[0], in_ip[1], in_ip[2], in_ip[3] + device_id);
+  IPAddress gateway( in_gw[0], in_gw[1], in_gw[2], in_gw[3] ); //gatewayのIPアドレス
+  IPAddress subnet( in_subnet[0], in_subnet[1], in_subnet[2], in_subnet[3]);
+
+  int cnt = 0;
+  unsigned long connectTimeout = 3000; //10 seconds
+  unsigned long timer_ms = millis();
+
+  if( connect_mode == MODE_STA_ONLY  ){
+    // Station mode
+    Serial.println("STA mode started");
+    WiFi.mode(WIFI_STA);
+    WiFi.config(ip, gateway, subnet);
+
+    // Connect to WiFi network
+    Serial.print("Connecting to ");
+    Serial.println(in_ssid);
+    WiFi.begin(in_ssid, in_password);
+
+    unsigned long start = millis();
+    while (WiFi.status() != WL_CONNECTED && millis() - start < connectTimeout) {
+      delay(500);
+      Serial.print(".");
+    }
+
+  }
+  else{  //if( connect_mode == MODE_AP_ONLY ){
+    Serial.println("AP mode started");
+    WiFi.mode(WIFI_AP);
+    WiFi.config(ip, gateway, subnet);
+
+    // Connect to WiFi network
+    Serial.print("AP SSID: ");
+    Serial.println( in_ssid);
+    WiFi.begin(in_ssid, in_password);
+
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("");
+    Serial.println("WiFi connected");
+    Serial.println("IP address: ");
+    Serial.println(WiFi.localIP());
+
+    return 0;
+
+  } else {
+    Serial.println("");
+    Serial.println("WiFi connection failed");
+    return -1;
+
+  }
+}
+
+// void wifi_setup_withEep(  int device_id, int connect_mode,  
+//   int sta_ip[], int sta_gw[], int sta_subnet[], char* sta_ssid, char* sta_password, 
+//   int ap_ip[],   int ap_gw[], int ap_subnet[],  char* ap_ssid,  char* ap_password, int MAX_SSID_LENGTH, int MAX_PASSWORD_LENGTH ){
+
+//   // IPAddress ip(     192, 168, 40, 100 + device_id);
+//   // IPAddress gateway(192, 168, 40, 100 + device_id); //gatewayのIPアドレス
+//   // IPAddress subnet(255,255,255,0);
+
+//   // IPAddress ip(     192, 168, 21, 109 + device_id);
+//   // IPAddress gateway(192, 168, 21, 109 + device_id); //gatewayのIPアドレス
+//   // IPAddress subnet(255,255,255,0);
+
+//   IPAddress ip(     sta_ip[0], sta_ip[1], sta_ip[2], sta_ip[3] + device_id);
+//   IPAddress gateway(sta_gw[0], sta_gw[1], sta_gw[2], sta_gw[3] ); //gatewayのIPアドレス
+//   IPAddress subnet(sta_subnet[0], sta_subnet[1], sta_subnet[2], sta_subnet[3]);
+
+
+//   int cnt = 0;
+//   int sta_mode_connected = 0;
+//   unsigned long connectTimeout = 3000; //10 seconds
+//   unsigned long timer_ms = millis();
+
+
+//    // Station mode
+//   WiFi.mode(WIFI_STA);
+//   WiFi.config(ip, gateway, subnet);
+
+//   // Connect to WiFi network
+//   Serial.print("Connecting to ");
+//   Serial.println(ssid_sta);
+
+//   WiFi.begin(ssid_sta, password_sta);
+
+//   unsigned long start = millis();
+//   while (WiFi.status() != WL_CONNECTED && millis() - start < connectTimeout) {
+//     delay(500);
+//     Serial.print(".");
+//   }
+
+//   if (WiFi.status() == WL_CONNECTED) {
+//     Serial.println("");
+//     Serial.println("WiFi connected");
+//     Serial.println("IP address: ");
+//     Serial.println(WiFi.localIP());
+
+//   } else {
+//     // AP mode
+//     Serial.println("");
+//     Serial.println("WiFi connection failed");
+//     Serial.println("Switching to AP mode");
+
+//     WiFi.mode(WIFI_AP);
+//     // IPAddress ap_ip(192, 168, 4, 1);
+//     // IPAddress ap_subnet(255, 255, 255, 0);
+//     //WiFi.softAPConfig(ap_ip, ap_ip, ap_subnet);
+//   IPAddress ip(     ap_ip[0], ap_ip[1], ap_ip[2], ap_ip[3] + device_id);
+//   IPAddress gateway(ap_gw[0], ap_gw[1], ap_gw[2], ap_gw[3] ); //gatewayのIPアドレス
+//   IPAddress subnet(ap_subnet[0], ap_subnet[1], ap_subnet[2], ap_subnet[3]);  
+
+//     char ssid_ap_id[MAX_SSID_LENGTH + 2]; // ヌル終端を含むため、+2する
+//     std::snprintf(ssid_ap_id, sizeof(ssid_ap_id), "%s_%d", ap_ssid, device_id);    
+//     WiFi.softAP(ssid_ap_id, password_ap);
+//     Serial.println("AP mode started");
+//     Serial.print("AP SSID: ");
+//     Serial.println(ssid_ap_id);
+//   }
+
+// }
 
 void wifi_setup( int wifi_mode ){
   delay(500);
@@ -359,7 +488,6 @@ void handlePost() {
          inputdata[i] = v; i++;
 
         }
-        canTxbuf_test();
        // Serial.print("posted ");
 
         canTxbuf_set( id, dlc, cycle, inputdata, trans);

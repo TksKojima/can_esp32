@@ -12,7 +12,7 @@ int countMax = 5;
 
 void can_init(){
    Serial.println("CAN Sender");
-   CAN.setPins(26, 27);
+   CAN.setPins(32, 27); // ESP-tx:2562-tx,  ESP-rx:2562-rx
    //CAN.setPins(4, 5);
 
   // start the CAN bus at 500 kbps
@@ -58,8 +58,20 @@ void canbuf_init(){
 }
 
 void canTxbuf_test(){
+  char testdata[8];
+  testdata[0] = 192;
+  testdata[1] = 168;
+  testdata[2] = 10;
+  testdata[3] = 10;
+  testdata[4] = 0;
+  testdata[5] = 4;
+  testdata[6] = 0;
+  testdata[7] = 0;
 
+  canTxbuf_set( 765, 8, 100, testdata, 1);
+  
 }
+
 void canTxbuf_set( int id, int dlc, int cycle, char *data, int txflag ){
   canbuf[id].dlc = dlc;
   canbuf[id].cycleTime = cycle;
