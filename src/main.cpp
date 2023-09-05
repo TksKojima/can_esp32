@@ -72,7 +72,7 @@ void ota_loop() {
 }
 
 //セッティングONのときの設定
-const char* set_ssid = "EspWiFi";
+const char* set_ssid = "esp32can0";
 const char* set_password = "98765432";
 int set_ip[] ={ 192, 168, 0, 123 };
 int set_gt[] ={ 192, 168, 0, 1 };

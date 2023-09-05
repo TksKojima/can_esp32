@@ -65,30 +65,30 @@ void canbuf_init(){
 }
 
 void canTxbuf_set_test(){
-  unsigned char  testdata[8];
-  testdata[0] = 192;
-  testdata[1] = 168;
-  testdata[2] = 10;
-  testdata[3] = 10;
-  testdata[4] = 0;
-  testdata[5] = 4;
-  testdata[6] = 0;
-  testdata[7] = 0;
-  canTxbuf_set( 0x732, 8, 732, testdata, 1);
+  // unsigned char  testdata[8];
+  // testdata[0] = 192;
+  // testdata[1] = 168;
+  // testdata[2] = 10;
+  // testdata[3] = 10;
+  // testdata[4] = 0;
+  // testdata[5] = 4;
+  // testdata[6] = 0;
+  // testdata[7] = 0;
+  // canTxbuf_set( 0x732, 8, 732, testdata, 1);
 
-  // for( int i=1; i<=30; i++){
-  //   canbuf[i].dlc = i%8 + 1;
-  //   canbuf[i].txrxFlag = 1;
-  //   canbuf[i].cycleTime = canbuf[i].dlc * 100;
-  //   if( i<5 ) {
-  //       canbuf[i].cycleTime = canbuf[i].dlc  * 10;
-  //   }
-  //   canbuf[i].data.u2[0] = 0x1234;
-  //   canbuf[i].data.u2[1] = 0x5678;
-  //   canbuf[i].data.u2[2] = 0x9abc ;
-  //   canbuf[i].data.u2[3] = 0;
-  //   canTxbuf_set( i, canbuf[i].dlc, canbuf[i].cycleTime, canbuf[i].data.u1, 1 );
-  // }  
+  for( int i=1; i<=30; i++){
+    canbuf[i].dlc = i%8 + 1;
+    canbuf[i].txrxFlag = 1;
+    canbuf[i].cycleTime = canbuf[i].dlc * 100;
+    if( i<5 ) {
+        canbuf[i].cycleTime = canbuf[i].dlc  * 10;
+    }
+    canbuf[i].data.u2[0] = 0x1234;
+    canbuf[i].data.u2[1] = 0x5678;
+    canbuf[i].data.u2[2] = 0x9abc ;
+    canbuf[i].data.u2[3] = 0;
+    canTxbuf_set( i, canbuf[i].dlc, canbuf[i].cycleTime, canbuf[i].data.u1, 1 );
+  }  
 }
 
 void canTxbuf_set( int id, char dlc, int cycle, unsigned char *data, int txflag ){
